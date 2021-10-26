@@ -1,0 +1,1404 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR      26/Oct/2021  16:53:18
+// Copyright 1996-2021 IAR Systems AB.
+//
+//    Source file  =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\main.c
+//    Command line =  
+//        -f C:\Users\aly\AppData\Local\Temp\EW686C.tmp
+//        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\main.c
+//        --cpu=m8 -ms -o
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+//        -lCN
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        -lB
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+//        --eeprom_size 512 --clib -Ohz)
+//    Locale       =  Russian_RUS.1251
+//    List file    =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\main.s90
+//
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME main
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B2_L09
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?EPILOGUE_B5_L09
+        EXTERN ?EPILOGUE_B9_L09
+        EXTERN ?F_MUL_L04
+        EXTERN ?PROLOGUE2_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?PROLOGUE5_L09
+        EXTERN ?PROLOGUE9_L09
+        EXTERN ?Register_R4_is_cg_reg
+        EXTERN ?Register_R5_is_cg_reg
+        EXTERN ?Register_R6_is_cg_reg
+        EXTERN ?Register_R7_is_cg_reg
+        EXTERN ?Register_R8_is_cg_reg
+        EXTERN ?S_EC_MUL_L02
+        EXTERN ?UL2F_L04
+        EXTERN ?US_SHR_L02
+        EXTERN ?need_segment_init
+
+        PUBWEAK `?<Segment init: NEAR_I>`
+        PUBWEAK `?<Segment init: NEAR_Z>`
+        PUBWEAK `??TIMER0_OVF_vect_interrupt::??INTVEC 18`
+        PUBLIC TEST
+        PUBLIC TIMER0_OVF_vect_interrupt
+        PUBWEAK _A_DDRB
+        PUBWEAK _A_DDRC
+        PUBWEAK _A_DDRD
+        PUBWEAK _A_PORTB
+        PUBWEAK _A_PORTC
+        PUBWEAK _A_PORTD
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC analog_in_to_com
+        PUBLIC buttons_in_to_com
+        PUBLIC check_packet_crc
+        PUBLIC corr_val_to_lcd
+        PUBLIC crlf
+        PUBLIC flags
+        PUBLIC get_node_num
+        PUBLIC led_timeout
+        PUBLIC main
+        PUBLIC nodes_an_inputs
+        PUBLIC nodes_btns
+        PUBLIC nodes_temperatures
+        PUBLIC read_buttons
+        PUBLIC rf_packet
+        PUBLIC save_an_inputs
+        PUBLIC save_temperature
+        PUBLIC temperature
+        PUBLIC temperature_to_com
+
+TIMER0_OVF_vect_interrupt SYMBOL "TIMER0_OVF_vect_interrupt"
+`??TIMER0_OVF_vect_interrupt::??INTVEC 18` SYMBOL "??INTVEC 18", TIMER0_OVF_vect_interrupt
+
+        EXTERN DataInReceiveBuffer
+        EXTERN GetBlockCRC
+        EXTERN RF_receiver_init
+        EXTERN Restore_default_settings
+        EXTERN Restore_settings_from_eeprom
+        EXTERN TIMER0_init
+        EXTERN USART_Init
+        EXTERN USART_Receive
+        EXTERN USART_Transmit
+        EXTERN USART_sendstr
+        EXTERN ccor1
+        EXTERN ccor2
+        EXTERN ccor3
+        EXTERN float_conversion
+        EXTERN hex_to_ascii
+        EXTERN lcdDataWrite
+        EXTERN lcdGotoXY
+        EXTERN lcdInit
+        EXTERN lcdPrintData_P
+        EXTERN modb_timeout
+        EXTERN modbus_task
+        EXTERN rc4_crypt
+        EXTERN rc4_setup
+        EXTERN strbuf
+        EXTERN terminal
+        EXTERN wp
+
+// D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\main.c
+//    1 /*
+//    2   Программа центрального приемника на ATMEGA8
+//    3 */
+//    4 #include <iom8.h>
+
+        ASEGN ABSOLUTE:DATA:NOROOT,038H
+// union <unnamed> volatile __io _A_PORTB
+_A_PORTB:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,037H
+// union <unnamed> volatile __io _A_DDRB
+_A_DDRB:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,035H
+// union <unnamed> volatile __io _A_PORTC
+_A_PORTC:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,034H
+// union <unnamed> volatile __io _A_DDRC
+_A_DDRC:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,032H
+// union <unnamed> volatile __io _A_PORTD
+_A_PORTD:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,031H
+// union <unnamed> volatile __io _A_DDRD
+_A_DDRD:
+        DS8 1
+//    5 #include <ina90.h>
+//    6 #include <string.h>
+//    7 #include <pgmspace.h>
+//    8 #include <stdio.h>
+//    9 #include "main.h"
+//   10 #include "USART.h"
+//   11 #include "Monitor.h"
+//   12 #include "Wrk_params.h"
+//   13 #include "Timers.h"
+//   14 #include "..\PRG_Transmitter\RF_settings.h"
+//   15 #include "RF_receiver.h"
+//   16 #include "Util.h"
+//   17 #include "bin_defines.h"
+//   18 #include "lcd.h"
+//   19 #include "rc4.h"
+//   20 #include "modbus.h"
+//   21 
+//   22 
+//   23 
+
+        RSEG NEAR_F:CODE:NOROOT(0)
+        DATA
+//   24 __flash char TEST[] = "Test";
+TEST:
+        DC8 "Test"
+//   25 
+//   26 extern __no_init TPARAMS wp;   // Рабочие параметры в RAM
+//   27 extern char strbuf[INBUF_LEN];
+//   28 extern unsigned char ccor1;
+//   29 extern unsigned char ccor2;
+//   30 extern unsigned char ccor3;
+//   31 
+//   32 extern volatile unsigned int  modb_timeout;
+//   33 
+//   34 
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//   35 char rf_packet[20];
+rf_packet:
+        DS8 20
+//   36 
+//   37 volatile tflags flags;
+//   38 
+//   39 int temperature;
+//   40 
+//   41 
+//   42 D1W_device    nodes_temperatures[MAX_NODES][MAX_DEVICES];
+//   43 unsigned int  nodes_an_inputs[MAX_NODES][MAX_AN_IN]; // Массив состояний аналоговых входов
+//   44 
+//   45 unsigned char nodes_btns[MAX_NODES];
+//   46 
+//   47 unsigned int  led_timeout;
+led_timeout:
+        DS8 2
+flags:
+        DS8 1
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+temperature:
+        DS8 2
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+nodes_temperatures:
+        DS8 160
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+nodes_an_inputs:
+        DS8 48
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+nodes_btns:
+        DS8 4
+//   48 
+//   49 
+//   50 unsigned char check_packet_crc(void);
+//   51 unsigned char save_temperature(unsigned char node);
+//   52 unsigned char save_an_inputs(unsigned char node);
+//   53 void          read_buttons(unsigned char node);
+//   54 unsigned char get_node_num(void);
+//   55 
+//   56 
+//   57 void          temperature_to_com(unsigned char node);
+//   58 void          analog_in_to_com(unsigned char node);
+//   59 void          buttons_in_to_com(unsigned char node);
+//   60 
+//   61 void          corr_val_to_lcd(void);
+//   62 /*--------------------------------------------------------------------------------------
+//   63 
+//   64      MAIN
+//   65 
+//   66   --------------------------------------------------------------------------------------*/
+//   67 void main( void )
+//   68 {
+//   69 /*
+//   70   P_OUT1    (0x04)   Управляемый выход 1
+//   71   P_OUT2    (0x04)   Управляемый выход 2
+//   72   P_BT1     (0x04)   Кнопка 1
+//   73   P_BT2     (0x08)   Кнопка 2
+//   74   P_BT3     (0x10)   Кнопка 3
+//   75   P_BT4     (0x20)   Кнопка 4
+//   76 */
+//   77   DDRB  = P_OUT1 | P_OUT2;
+//   78   PORTB = b11111111 & (~P_OUT1) & (~P_OUT2);
+//   79 
+//   80 /*
+//   81   P_RS      (0x01)   Сигнал выбора регистра LCD
+//   82   P_RW      (0x02)   Сигнал чтения-записи   LCD
+//   83   P_E       (0x04)   Сигнал разрешения      LCD
+//   84   P_TST     (0x20)   Вспомогательный сигнал 
+//   85 */
+//   86   DDRC  = P_RS | P_RW | P_E | P_TST;
+//   87   PORTC = b11111111 & (~P_RW) & (~P_E);
+//   88 
+//   89 /*
+//   90   P_RXD     (0x01)
+//   91   P_TXD     (0x02)
+//   92   P_LED     (0x04)  Управление светодиодом  
+//   93   P_DIN     (0x08)  Вход сигнала с приемника
+//   94   P_D0      (0x10)  Сигнал данных LCD
+//   95   P_D1      (0x20)  Сигнал данных LCD
+//   96   P_D2      (0x40)  Сигнал данных LCD
+//   97   P_D3      (0x80)  Сигнал данных LCD
+//   98 */
+//   99   DDRD  = P_TXD | P_LED | P_D0 |  P_D1 |  P_D2 |  P_D3;
+//  100   PORTD = 0xFF & (~P_DIN) & (~P_D0) & (~P_D1) & (~P_D2) & (~P_D3) ;
+//  101 
+//  102   TIMER0_init();
+//  103   USART_Init( 16 );  // 115200 при кварце 16 Мгц
+//  104   _SEI();           /* Enable interrupts => enable UART interrupts */
+//  105 
+//  106   // Инициализируем оперативные переменные из EEPROM
+//  107   if (Restore_settings_from_eeprom()== 0)
+//  108   {
+//  109     Restore_default_settings();
+//  110     USART_Transmit('c');
+//  111   }
+//  112   else
+//  113   {
+//  114     if (wp.version != PRG_VERSION)
+//  115     {
+//  116       Restore_default_settings();
+//  117       USART_Transmit('v');
+//  118     }
+//  119     else
+//  120     {
+//  121       USART_Transmit('.');
+//  122     }
+//  123   }
+//  124 
+//  125 
+//  126 
+//  127   __delay_cycles(1600000);
+//  128 
+//  129   lcdInit();
+//  130   lcdPrintData_P(TEST);
+//  131 
+//  132 
+//  133   RF_receiver_init(rf_packet);
+//  134 
+//  135 
+//  136   for( ; ; )        /* Forever */
+//  137   {
+//  138     if (flags.done)
+//  139     {
+//  140       unsigned char node;
+//  141 
+//  142       flags.done = 0;
+//  143 
+//  144       corr_val_to_lcd();
+//  145       lcdGotoXY(7,0);
+//  146       
+//  147       PORTD &= ~P_LED;
+//  148       led_timeout = 200;
+//  149 
+//  150       rc4_setup((unsigned char*)&wp.keycode, 4 );
+//  151       rc4_crypt((unsigned char*)rf_packet, 11 );
+//  152 
+//  153       node = get_node_num();
+//  154       if (node < MAX_NODES)
+//  155       {
+//  156         // Проверим контрольную сумму
+//  157         if (check_packet_crc())
+//  158         {
+//  159           switch (rf_packet[0] >> 4)
+//  160           {
+//  161           case PACK_TEMPER:
+//  162             save_temperature(node);
+//  163 //            temperature_to_com(node);
+//  164             break;
+//  165           case PACK_BUTTONS:
+//  166             read_buttons(node);
+//  167 //            buttons_in_to_com(node);
+//  168             break;
+//  169           case PACK_ADC:
+//  170             save_an_inputs(node);
+//  171 //            analog_in_to_com(node);
+//  172             break;
+//  173           }
+//  174           lcdDataWrite('+'); // Контрольная сумма корректная 
+//  175         }
+//  176         else
+//  177         {
+//  178           lcdDataWrite('-'); // Ошибка контрольной суммы 
+//  179           
+//  180         }  
+//  181       }
+//  182 
+//  183     }
+//  184 
+//  185     if (DataInReceiveBuffer())
+//  186     {
+//  187       char ch;
+//  188       ch = USART_Receive();
+//  189 
+//  190       if (ch == 0x1B)
+//  191       {
+//  192         crlf();
+//  193         USART_Transmit('>');
+//  194         terminal();
+//  195       }
+//  196       
+//  197       modbus_task(ch);
+//  198       
+//  199     }
+//  200 
+//  201   }
+//  202 }
+//  203 
+//  204 
+//  205 /*--------------------------------------------------------------------------------------
+//  206    Проверка контрольной суммы полученного пакета
+//  207   --------------------------------------------------------------------------------------*/
+//  208 unsigned char check_packet_crc(void)
+//  209 {
+//  210   unsigned int crc;
+//  211   crc = ((unsigned int)rf_packet[9] << 8) | rf_packet[10];
+//  212 
+//  213   if (crc == GetBlockCRC((unsigned char*)rf_packet,9))
+//  214     return 1;
+//  215   else
+//  216     return 0;
+//  217 }
+//  218 
+//  219 /*--------------------------------------------------------------------------------------
+//  220   Запись в память принятого пакета с температурой
+//  221   --------------------------------------------------------------------------------------*/
+//  222 unsigned char save_temperature(unsigned char node)
+//  223 {
+//  224   unsigned char i,k;
+//  225   unsigned char res;
+//  226 
+//  227   // Ищем зарегистрированный идентификатор
+//  228   for (i=0;i<MAX_DEVICES;i++)
+//  229   {
+//  230      if (nodes_temperatures[node][i].id[0]!=0)
+//  231      {
+//  232         res = 0;
+//  233         for (k=0;k<6;k++)
+//  234         {
+//  235           if (nodes_temperatures[node][i].id[k]!= rf_packet[k+1])
+//  236           {
+//  237             res = 1;
+//  238             break;
+//  239           }
+//  240         }
+//  241         if (res == 0)
+//  242         {
+//  243           // Идентификатор уже зарегистрирован, запишем температуру для данного идентификатора
+//  244           nodes_temperatures[node][i].temperature =
+//  245             ((unsigned int)rf_packet[7] << 8) | rf_packet[8];
+//  246           return 1;
+//  247         }
+//  248      }
+//  249   }
+//  250   // Ищем пустой идентификатор
+//  251   for (i=0;i<MAX_DEVICES;i++)
+//  252   {
+//  253     if (nodes_temperatures[node][i].id[0]==0)
+//  254     {
+//  255       // Нашли. Запишем идентификатор и температуру
+//  256       for (k=0;k<6;k++) nodes_temperatures[node][i].id[k]= rf_packet[k+1];
+//  257       nodes_temperatures[node][i].temperature =
+//  258           ((unsigned int)rf_packet[7] << 8) | rf_packet[8];
+//  259       return 1;
+//  260     }
+//  261   }
+//  262   return 1;
+//  263 }
+//  264 
+//  265 
+//  266 /*--------------------------------------------------------------------------------------
+//  267 
+//  268   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  269 unsigned char save_an_inputs(unsigned char node)
+save_an_inputs:
+        CODE
+//  270 {
+        RCALL   ?PROLOGUE4_L09
+//  271   unsigned char i,j,k, bitcnt;
+//  272 
+//  273   bitcnt = 0;
+        LDI     R18, 0
+//  274   k      = 0;
+        LDI     R19, 0
+//  275 
+//  276   // Очистим предварительно
+//  277   for (i=0;i<MAX_AN_IN;i++) nodes_an_inputs[node][i]=0;
+        LDI     R22, 0
+        LDI     R23, 6
+        RCALL   ?Subroutine2
+??CrossCallReturnLabel_28:
+        LDI     R24, LOW(nodes_an_inputs)
+        LDI     R25, (nodes_an_inputs) >> 8
+        ADD     R24, R16
+        ADC     R25, R17
+        LDI     R16, 2
+??save_an_inputs_0:
+        MUL     R22, R16
+        MOVW    R31:R30, R25:R24
+        ADD     R30, R0
+        ADC     R31, R1
+        ST      Z, R18
+        STD     Z+1, R18
+        INC     R22
+        DEC     R23
+        BRNE    ??save_an_inputs_0
+//  278 
+//  279   // Распакуем результат
+//  280   for (i=1;i<9;i++)     // Проходим все байты пакета с результатами АЦП
+        LDI     R22, 1
+        LDI     R21, 8
+//  281   {
+//  282     for (j=0;j<8;j++)   // Проходим все биты в байте
+??save_an_inputs_1:
+        LDI     R20, 8
+        LDI     R23, 0
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_6:
+        ADD     R30, R22
+        ADC     R31, R23
+//  283     {
+//  284       if (bitcnt == 10) // В результате 10 бит
+??save_an_inputs_2:
+        CPI     R18, 10
+        BRNE    ??save_an_inputs_3
+//  285       {
+//  286         k++;  // Перейдем к следующему результату
+        INC     R19
+//  287         if (k==MAX_AN_IN) return 1;
+        CPI     R19, 6
+        BREQ    ??save_an_inputs_4
+//  288         bitcnt=0;
+        LDI     R18, 1
+        RJMP    ??save_an_inputs_5
+//  289       }
+//  290       else
+//  291       {
+//  292         nodes_an_inputs[node][k] <<=1;
+??save_an_inputs_3:
+        RCALL   ?Subroutine1
+//  293       }
+??CrossCallReturnLabel_2:
+        SBIW    R27:R26, 1
+        LSL     R16
+        ROL     R17
+        ST      X+, R16
+        ST      X, R17
+        INC     R18
+//  294       if ((rf_packet[i] & 0x80)!=0)  nodes_an_inputs[node][k]++;
+??save_an_inputs_5:
+        LD      R16, Z
+        SBRS    R16, 7
+        RJMP    ??save_an_inputs_6
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_3:
+        SUBI    R16, 255
+        SBCI    R17, 255
+        ST      X, R17
+        ST      -X, R16
+//  295       rf_packet[i] <<=1;
+??save_an_inputs_6:
+        LD      R16, Z
+        LSL     R16
+        ST      Z, R16
+//  296 
+//  297       bitcnt++;
+//  298 
+//  299     }
+        DEC     R20
+        BRNE    ??save_an_inputs_2
+//  300   }
+        INC     R22
+        DEC     R21
+        BRNE    ??save_an_inputs_1
+//  301   return 1;
+??save_an_inputs_4:
+        REQUIRE ?Subroutine14
+        ;               // Fall through to label ?Subroutine14
+//  302 
+//  303 }
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine14:
+        LDI     R16, 1
+        REQUIRE ??Subroutine16_0
+        ;               // Fall through to label ??Subroutine16_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+??Subroutine16_0:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine2:
+        LDI     R17, 0
+        LDI     R20, 12
+        REQUIRE ??Subroutine17_0
+        ;               // Fall through to label ??Subroutine17_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+??Subroutine17_0:
+        LDI     R21, 0
+        RJMP    ?S_EC_MUL_L02
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine1:
+        LDI     R16, 2
+        MUL     R19, R16
+        MOVW    R27:R26, R25:R24
+        ADD     R26, R0
+        ADC     R27, R1
+        LD      R16, X+
+        LD      R17, X
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+read_buttons:
+        CODE
+        LDS     R16, (rf_packet + 1)
+        TST     R16
+        BREQ    ??read_buttons_0
+        IN      R17, 0x18
+        LDI     R16, 1
+        EOR     R17, R16
+        OUT     0x18, R17
+??read_buttons_0:
+        LDS     R16, (rf_packet + 2)
+        TST     R16
+        BREQ    ??read_buttons_1
+        IN      R17, 0x18
+        LDI     R16, 2
+        EOR     R17, R16
+        OUT     0x18, R17
+??read_buttons_1:
+        RET
+        REQUIRE _A_PORTB
+
+        RSEG `CODE`:CODE:NOROOT(1)
+save_temperature:
+        CODE
+        RCALL   ?PROLOGUE4_L09
+        LDI     R18, 0
+        LDI     R22, 4
+        LDI     R17, 0
+        LDI     R20, 40
+        RCALL   ??Subroutine17_0
+??CrossCallReturnLabel_25:
+        LDI     R26, LOW(nodes_temperatures)
+        LDI     R27, (nodes_temperatures) >> 8
+        ADD     R26, R16
+        ADC     R27, R17
+??save_temperature_0:
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_0:
+        LD      R19, Z
+        TST     R19
+        BREQ    ??save_temperature_1
+        LDI     R20, 0
+        LDI     R19, 6
+??save_temperature_2:
+        LDI     R21, 0
+        MOVW    R31:R30, R17:R16
+        ADD     R30, R20
+        ADC     R31, R21
+        LD      R23, Z
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_4:
+        LDD     R21, Z+1
+        CP      R23, R21
+        BRNE    ??save_temperature_1
+        INC     R20
+        DEC     R19
+        BREQ    ??save_temperature_3
+        RJMP    ??save_temperature_2
+??save_temperature_1:
+        INC     R18
+        DEC     R22
+        BRNE    ??save_temperature_0
+        LDI     R18, 0
+        LDI     R19, 4
+??save_temperature_4:
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_1:
+        LD      R20, Z
+        TST     R20
+        BRNE    ??save_temperature_5
+        LDI     R20, 0
+        LDI     R19, 6
+        LDI     R21, 0
+??save_temperature_6:
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_5:
+        LDD     R22, Z+1
+        MOVW    R31:R30, R17:R16
+        ADD     R30, R20
+        ADC     R31, R21
+        ST      Z, R22
+        INC     R20
+        DEC     R19
+        BRNE    ??save_temperature_6
+??save_temperature_3:
+        LDS     R23, (rf_packet + 7)
+        LDI     R17, 0
+        LDS     R22, (rf_packet + 8)
+        MOV     R16, R18
+        LDI     R20, 10
+        RCALL   ??Subroutine17_0
+??CrossCallReturnLabel_26:
+        ADD     R26, R16
+        ADC     R27, R17
+        MOVW    R31:R30, R27:R26
+        STD     Z+8, R22
+        STD     Z+9, R23
+        RJMP    ??save_temperature_7
+??save_temperature_5:
+        INC     R18
+        DEC     R19
+        BRNE    ??save_temperature_4
+??save_temperature_7:
+        RJMP    ?Subroutine14
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine3:
+        LDI     R30, LOW(rf_packet)
+        LDI     R31, (rf_packet) >> 8
+        ADD     R30, R20
+        ADC     R31, R21
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine0:
+        MOV     R16, R18
+        LDI     R17, 0
+        LDI     R20, 10
+        LDI     R21, 0
+        RCALL   ?S_EC_MUL_L02
+        MOVW    R21:R20, R17:R16
+        MOVW    R17:R16, R27:R26
+        ADD     R16, R20
+        ADC     R17, R21
+        MOVW    R31:R30, R17:R16
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+corr_val_to_lcd:
+        CODE
+        LDI     R17, 1
+        LDI     R16, 0
+        RCALL   lcdGotoXY
+        LDS     R16, ccor1
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_12:
+        LDS     R16, ccor1
+        RCALL   ?Subroutine15
+??CrossCallReturnLabel_24:
+        LDS     R16, ccor2
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_13:
+        LDS     R16, ccor2
+        RCALL   ?Subroutine15
+??CrossCallReturnLabel_23:
+        LDS     R16, ccor3
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_14:
+        LDS     R16, ccor3
+        REQUIRE ?Subroutine15
+        ;               // Fall through to label ?Subroutine15
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine15:
+        RCALL   hex_to_ascii
+        RJMP    lcdDataWrite
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine6:
+        SWAP    R16
+        ANDI    R16, 0x0F
+        RJMP    ?Subroutine15
+
+        RSEG `CODE`:CODE:NOROOT(1)
+crlf:
+        CODE
+        LDI     R16, 10
+        RCALL   USART_Transmit
+        LDI     R16, 13
+        RJMP    USART_Transmit
+
+        RSEG `CODE`:CODE:NOROOT(1)
+main:
+        CODE
+        ST      -Y, R24
+        LDI     R16, 3
+        OUT     0x17, R16
+        LDI     R16, 252
+        OUT     0x18, R16
+        LDI     R16, 39
+        OUT     0x14, R16
+        LDI     R16, 249
+        OUT     0x15, R16
+        LDI     R16, 246
+        OUT     0x11, R16
+        LDI     R16, 7
+        OUT     0x12, R16
+        RCALL   TIMER0_init
+        LDI     R16, 16
+        LDI     R17, 0
+        RCALL   USART_Init
+        SEI
+        RCALL   Restore_settings_from_eeprom
+        TST     R16
+        BRNE    ??main_0
+        RCALL   Restore_default_settings
+        LDI     R16, 99
+        RJMP    ??main_1
+??main_0:
+        LDI     R30, LOW(wp)
+        LDI     R31, (wp) >> 8
+        LD      R16, Z
+        LDD     R17, Z+1
+        CPI     R16, 103
+        SBCI    R17, 0
+        BREQ    ??main_2
+        RCALL   Restore_default_settings
+        LDI     R16, 118
+        RJMP    ??main_1
+??main_2:
+        LDI     R16, 46
+??main_1:
+        RCALL   USART_Transmit
+        LDI     R16, 255
+        LDI     R17, 225
+        LDI     R18, 4
+        SUBI    R16, 1
+        SBCI    R17, 0
+        SBCI    R18, 0
+        BRNE    $-6
+        RJMP    $+2
+        NOP
+        RCALL   lcdInit
+        LDI     R16, LOW(TEST)
+        LDI     R17, (TEST) >> 8
+        RCALL   lcdPrintData_P
+        LDI     R16, LOW(rf_packet)
+        LDI     R17, (rf_packet) >> 8
+        RCALL   RF_receiver_init
+        RJMP    ??main_3
+??main_4:
+        LDI     R16, 45
+??main_5:
+        RCALL   lcdDataWrite
+??main_6:
+        RCALL   DataInReceiveBuffer
+        TST     R16
+        BREQ    ??main_3
+        RCALL   USART_Receive
+        MOV     R24, R16
+        CPI     R16, 27
+        BRNE    ??main_7
+        RCALL   crlf
+        LDI     R16, 62
+        RCALL   USART_Transmit
+        RCALL   terminal
+??main_7:
+        MOV     R16, R24
+        RCALL   modbus_task
+??main_3:
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_7:
+        LDD     R16, Z+22
+        SBRS    R16, 2
+        RJMP    ??main_6
+        LDD     R16, Z+22
+        ANDI    R16, 0xFB
+        STD     Z+22, R16
+        RCALL   corr_val_to_lcd
+        LDI     R17, 0
+        LDI     R16, 7
+        RCALL   lcdGotoXY
+        CBI     0x12, 0x02
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_8:
+        LDI     R16, 200
+        LDI     R17, 0
+        STD     Z+20, R16
+        STD     Z+21, R17
+        LDI     R18, 4
+        LDI     R16, LOW((wp + 8))
+        LDI     R17, HIGH((wp + 8))
+        RCALL   rc4_setup
+        LDI     R18, 11
+        LDI     R19, 0
+        LDI     R16, LOW(rf_packet)
+        LDI     R17, (rf_packet) >> 8
+        RCALL   rc4_crypt
+        LDS     R24, rf_packet
+        ANDI    R24, 0x07
+        CPI     R24, 4
+        BRCC    ??main_6
+        RCALL   check_packet_crc
+        TST     R16
+        BREQ    ??main_4
+        LDS     R16, rf_packet
+        SWAP    R16
+        ANDI    R16, 0x0F
+        BREQ    ??main_8
+        DEC     R16
+        BREQ    ??main_9
+        DEC     R16
+        BREQ    ??main_10
+        RJMP    ??main_11
+??main_8:
+        MOV     R16, R24
+        RCALL   save_temperature
+        RJMP    ??main_11
+??main_9:
+        MOV     R16, R24
+        RCALL   read_buttons
+        RJMP    ??main_11
+??main_10:
+        MOV     R16, R24
+        RCALL   save_an_inputs
+??main_11:
+        LDI     R16, 43
+        RJMP    ??main_5
+        REQUIRE _A_DDRB
+        REQUIRE _A_PORTB
+        REQUIRE _A_DDRC
+        REQUIRE _A_PORTC
+        REQUIRE _A_DDRD
+        REQUIRE _A_PORTD
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine4:
+        LDI     R30, LOW(rf_packet)
+        LDI     R31, (rf_packet) >> 8
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+check_packet_crc:
+        CODE
+        RCALL   ?PROLOGUE2_L09
+        LDS     R25, (rf_packet + 9)
+        LDS     R24, (rf_packet + 10)
+        LDI     R20, 9
+        LDI     R21, 0
+        LDI     R22, 0
+        LDI     R23, 0
+        LDI     R16, LOW(rf_packet)
+        LDI     R17, (rf_packet) >> 8
+        RCALL   GetBlockCRC
+        CP      R24, R16
+        CPC     R25, R17
+        BRNE    ??check_packet_crc_0
+        LDI     R16, 1
+        RJMP    ??check_packet_crc_1
+??check_packet_crc_0:
+        LDI     R16, 0
+??check_packet_crc_1:
+        LDI     R30, 2
+        RJMP    ?EPILOGUE_B2_L09
+//  304 
+//  305 
+//  306 /*--------------------------------------------------------------------------------------
+//  307    Выставить состояние внешних выходов в соответствии с нажатыми кнопками
+//  308   --------------------------------------------------------------------------------------*/
+//  309 void read_buttons(unsigned char node)
+//  310 {
+//  311   if (rf_packet[1]!=0) PORTB ^= P_OUT1;
+//  312   if (rf_packet[2]!=0) PORTB ^= P_OUT2;
+//  313 }
+//  314 
+//  315 /*--------------------------------------------------------------------------------------
+//  316    Получить номер узла приславшего пакет
+//  317   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  318 unsigned char get_node_num(void)
+get_node_num:
+        CODE
+//  319 {
+//  320   return rf_packet[0] & 0x07;
+        LDS     R16, rf_packet
+        ANDI    R16, 0x07
+        RET
+//  321 }
+//  322 
+//  323 
+//  324 /*--------------------------------------------------------------------------------------
+//  325    Выдать информацию о замерах температуры для заданного узла в последовательный порт
+//  326   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  327 void temperature_to_com(unsigned char node)
+temperature_to_com:
+        CODE
+//  328 {
+        RCALL   ?PROLOGUE9_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        REQUIRE ?Register_R5_is_cg_reg
+        REQUIRE ?Register_R6_is_cg_reg
+        REQUIRE ?Register_R7_is_cg_reg
+        REQUIRE ?Register_R8_is_cg_reg
+        MOV     R8, R16
+//  329   unsigned char i,j;
+//  330   float tmp;
+//  331 
+//  332   crlf();
+        RCALL   ?Subroutine9
+//  333   USART_sendstr("Node ");
+//  334   USART_Transmit(hex_to_ascii(node>>4));
+??CrossCallReturnLabel_19:
+        MOV     R16, R8
+        RCALL   ?Subroutine12
+//  335   USART_Transmit(hex_to_ascii(node));
+??CrossCallReturnLabel_36:
+        MOV     R16, R8
+        RCALL   ?Subroutine10
+//  336   crlf();
+//  337   for (i=0;i<MAX_DEVICES;i++)
+??CrossCallReturnLabel_22:
+        CLR     R6
+        LDI     R16, 4
+        MOV     R7, R16
+//  338   {
+//  339      for (j=0;j<6;j++)
+??temperature_to_com_0:
+        CLR     R4
+        LDI     R16, 6
+        MOV     R5, R16
+        MOV     R16, R8
+        LDI     R17, 0
+        LDI     R20, 40
+        RCALL   ??Subroutine17_0
+??CrossCallReturnLabel_27:
+        LDI     R24, LOW(nodes_temperatures)
+        LDI     R25, (nodes_temperatures) >> 8
+        ADD     R24, R16
+        ADC     R25, R17
+        MOV     R16, R6
+        LDI     R17, 0
+        LDI     R20, 10
+        RCALL   ?S_EC_MUL_L02
+        ADD     R24, R16
+        ADC     R25, R17
+//  340      {
+//  341        USART_Transmit(hex_to_ascii(nodes_temperatures[node][i].id[j]>>4));
+??temperature_to_com_1:
+        LDI     R17, 0
+        MOVW    R27:R26, R25:R24
+        ADD     R26, R4
+        RCALL   ?Subroutine5
+//  342        USART_Transmit(hex_to_ascii(nodes_temperatures[node][i].id[j]));
+//  343      }
+??CrossCallReturnLabel_10:
+        INC     R4
+        DEC     R5
+        BRNE    ??temperature_to_com_1
+//  344      USART_Transmit('=');
+        LDI     R16, 61
+        RCALL   USART_Transmit
+//  345      tmp = ((float)nodes_temperatures[node][i].temperature)/2;
+//  346      float_conversion(tmp,3,(unsigned char*)strbuf,'E',1,1);
+        LDI     R16, 1
+        ST      -Y, R16
+        ST      -Y, R16
+        LDI     R16, 69
+        ST      -Y, R16
+        LDI     R21, 0
+        MOVW    R31:R30, R25:R24
+        LDD     R16, Z+8
+        LDD     R17, Z+9
+        LDI     R18, 0
+        LDI     R19, 0
+        RCALL   ?UL2F_L04
+        LDI     R20, 0
+        LDI     R22, 0
+        LDI     R23, 63
+        RCALL   ?F_MUL_L04
+        LDI     R22, LOW(strbuf)
+        LDI     R23, (strbuf) >> 8
+        LDI     R20, 3
+        LDI     R21, 0
+        RCALL   float_conversion
+//  347      USART_sendstr(strbuf);
+        LDI     R16, LOW(strbuf)
+        LDI     R17, (strbuf) >> 8
+        RCALL   USART_sendstr
+//  348      crlf();
+        RCALL   crlf
+//  349   }
+        INC     R6
+        DEC     R7
+        BRNE    ??temperature_to_com_0
+//  350 }
+        LDI     R30, 9
+        RJMP    ?EPILOGUE_B9_L09
+//  351 
+//  352 /*--------------------------------------------------------------------------------------
+//  353    Выдать информацию о аналоговых входах для заданного узла в последовательный порт
+//  354   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  355 void analog_in_to_com(unsigned char node)
+analog_in_to_com:
+        CODE
+//  356 {
+        RCALL   ?PROLOGUE5_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        MOV     R4, R16
+//  357   unsigned char i;
+//  358 
+//  359   crlf();
+        RCALL   ?Subroutine9
+//  360   USART_sendstr("Node ");
+//  361   USART_Transmit(hex_to_ascii(node>>4));
+??CrossCallReturnLabel_18:
+        MOV     R16, R4
+        RCALL   ?Subroutine12
+//  362   USART_Transmit(hex_to_ascii(node));
+??CrossCallReturnLabel_37:
+        MOV     R16, R4
+        RCALL   ?Subroutine10
+//  363   crlf();
+//  364   for (i=0;i<MAX_AN_IN;i++)
+??CrossCallReturnLabel_21:
+        LDI     R24, 0
+        LDI     R25, 6
+//  365   {
+//  366      USART_Transmit(hex_to_ascii(i>>4));
+??analog_in_to_com_0:
+        RCALL   ?Subroutine7
+//  367      USART_Transmit(hex_to_ascii(i));
+//  368      USART_Transmit('=');
+??CrossCallReturnLabel_15:
+        LDI     R16, 61
+        RCALL   USART_Transmit
+//  369      USART_Transmit(hex_to_ascii(nodes_an_inputs[node][i]>>12));
+        MOV     R16, R4
+        RCALL   ?Subroutine2
+??CrossCallReturnLabel_29:
+        LDI     R26, LOW(nodes_an_inputs)
+        LDI     R27, (nodes_an_inputs) >> 8
+        ADD     R26, R16
+        ADC     R27, R17
+        LDI     R16, 2
+        MUL     R24, R16
+        ADD     R26, R0
+        ADC     R27, R1
+        ADIW    R27:R26, 1
+        LD      R16, X
+        LSR     R16
+        LSR     R16
+        LSR     R16
+        LSR     R16
+        RCALL   ??Subroutine18_0
+//  370      USART_Transmit(hex_to_ascii(nodes_an_inputs[node][i]>>8));
+??CrossCallReturnLabel_31:
+        LD      R16, X
+        SBIW    R27:R26, 1
+        RCALL   ??Subroutine18_0
+//  371      USART_Transmit(hex_to_ascii(nodes_an_inputs[node][i]>>4));
+??CrossCallReturnLabel_32:
+        LDI     R20, 4
+        LD      R16, X+
+        LD      R17, X
+        SBIW    R27:R26, 1
+        RCALL   ?US_SHR_L02
+        RCALL   ??Subroutine18_0
+//  372      USART_Transmit(hex_to_ascii(nodes_an_inputs[node][i]));
+??CrossCallReturnLabel_33:
+        LD      R16, X+
+        RCALL   ?Subroutine10
+//  373      crlf();
+//  374   }
+??CrossCallReturnLabel_20:
+        INC     R24
+        DEC     R25
+        BRNE    ??analog_in_to_com_0
+//  375 
+//  376 
+//  377 }
+        LDI     R30, 5
+        RJMP    ?EPILOGUE_B5_L09
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine10:
+        RCALL   ??Subroutine18_0
+??CrossCallReturnLabel_30:
+        RJMP    crlf
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine9:
+        RCALL   crlf
+        LDI     R16, LOW(`?<Constant "Node ">`)
+        LDI     R17, (`?<Constant "Node ">`) >> 8
+        RJMP    USART_sendstr
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine12:
+        SWAP    R16
+        ANDI    R16, 0x0F
+        REQUIRE ??Subroutine18_0
+        ;               // Fall through to label ??Subroutine18_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+??Subroutine18_0:
+        RCALL   hex_to_ascii
+        RJMP    USART_Transmit
+//  378 
+//  379 /*--------------------------------------------------------------------------------------
+//  380    Выдать информацию о пакете с информацией о нажатых кнопках
+//  381   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  382 void buttons_in_to_com(unsigned char node)
+buttons_in_to_com:
+        CODE
+//  383 {
+        RCALL   ?PROLOGUE4_L09
+        MOV     R24, R16
+//  384   unsigned char i;
+//  385 
+//  386   crlf();
+        RCALL   ?Subroutine9
+//  387   USART_sendstr("Node ");
+//  388   USART_Transmit(hex_to_ascii(node>>4));
+??CrossCallReturnLabel_17:
+        RCALL   ?Subroutine7
+//  389   USART_Transmit(hex_to_ascii(node));
+//  390   crlf();
+??CrossCallReturnLabel_16:
+        RCALL   crlf
+//  391   for (i=1;i<9;i++)
+        LDI     R24, 1
+        LDI     R25, 8
+//  392   {
+//  393      USART_Transmit(hex_to_ascii(rf_packet[i]>>4));
+??buttons_in_to_com_0:
+        LDI     R17, 0
+        LDI     R26, LOW(rf_packet)
+        LDI     R27, (rf_packet) >> 8
+        ADD     R26, R24
+        RCALL   ?Subroutine5
+//  394      USART_Transmit(hex_to_ascii(rf_packet[i]));
+//  395      USART_Transmit(' ');
+??CrossCallReturnLabel_11:
+        LDI     R16, 32
+        RCALL   USART_Transmit
+//  396   }
+        INC     R24
+        DEC     R25
+        BRNE    ??buttons_in_to_com_0
+//  397   crlf();
+        RCALL   crlf
+//  398 }
+        RJMP    ??Subroutine16_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine7:
+        MOV     R16, R24
+        RCALL   ?Subroutine12
+??CrossCallReturnLabel_35:
+        MOV     R16, R24
+        RJMP    ??Subroutine18_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine5:
+        ADC     R27, R17
+        LD      R16, X
+        RCALL   ?Subroutine12
+??CrossCallReturnLabel_34:
+        LD      R16, X
+        RJMP    ??Subroutine18_0
+//  399 
+//  400 
+//  401 void crlf(void)
+//  402 {
+//  403   USART_Transmit('\n');
+//  404   USART_Transmit('\r');
+//  405 }
+//  406 
+//  407 
+//  408 void corr_val_to_lcd(void)
+//  409 {
+//  410   lcdGotoXY(0,1);
+//  411   lcdDataWrite(hex_to_ascii(ccor1>>4));
+//  412   lcdDataWrite(hex_to_ascii(ccor1));
+//  413   lcdDataWrite(hex_to_ascii(ccor2>>4));
+//  414   lcdDataWrite(hex_to_ascii(ccor2));
+//  415   lcdDataWrite(hex_to_ascii(ccor3>>4));
+//  416   lcdDataWrite(hex_to_ascii(ccor3));
+//  417 
+//  418 }
+//  419 
+//  420 
+//  421 /*--------------------------------------------------------------------------------------
+//  422    Прерывания таймера 0 используються для формирования временных интервалов
+//  423    Период прерываний = 0.001024 мс
+//  424   --------------------------------------------------------------------------------------*/
+//  425 #pragma vector=TIMER0_OVF_vect
+
+        RSEG `CODE`:CODE:NOROOT(1)
+        CALL_GRAPH_ROOT TIMER0_OVF_vect_interrupt, "interrupt"
+//  426 __interrupt void TIMER0_OVF_vect_interrupt( void )
+TIMER0_OVF_vect_interrupt:
+        CODE
+//  427 {
+        ST      -Y, R31
+        ST      -Y, R30
+        ST      -Y, R18
+        ST      -Y, R17
+        ST      -Y, R16
+        IN      R18, 0x3F
+//  428  __watchdog_reset(); // Не забываем сбрасывать WDT
+        WDR
+//  429 
+//  430   if (led_timeout)
+        LDS     R16, (rf_packet + 20)
+        LDS     R17, (rf_packet + 21)
+        OR      R16, R17
+        BREQ    ??TIMER0_OVF_vect_interrupt_0
+//  431   {
+//  432     led_timeout--;
+        RCALL   ?Subroutine4
+//  433   }
+??CrossCallReturnLabel_9:
+        LDD     R16, Z+20
+        SUBI    R16, 1
+        SBCI    R17, 0
+        STD     Z+20, R16
+        STD     Z+21, R17
+        RJMP    ??TIMER0_OVF_vect_interrupt_1
+//  434   else
+//  435     PORTD |= P_LED;
+??TIMER0_OVF_vect_interrupt_0:
+        SBI     0x12, 0x02
+//  436 
+//  437 
+//  438   // Отработка таймаута modbus протокола
+//  439   if (modb_timeout)
+??TIMER0_OVF_vect_interrupt_1:
+        LDS     R16, modb_timeout
+        LDS     R17, (modb_timeout + 1)
+        OR      R16, R17
+        BREQ    ??TIMER0_OVF_vect_interrupt_2
+//  440   {
+//  441     modb_timeout--;
+        LDI     R30, LOW(modb_timeout)
+        LDI     R31, (modb_timeout) >> 8
+        LD      R16, Z
+        LDD     R17, Z+1
+        SUBI    R16, 1
+        SBCI    R17, 0
+        ST      Z, R16
+        STD     Z+1, R17
+//  442   }
+//  443 
+//  444 
+//  445 }
+??TIMER0_OVF_vect_interrupt_2:
+        OUT     0x3F, R18
+        LD      R16, Y+
+        LD      R17, Y+
+        LD      R18, Y+
+        LD      R30, Y+
+        LD      R31, Y+
+        RETI
+        REQUIRE _A_PORTD
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01cH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01dH
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01eH
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EEARH:
+
+        COMMON INTVEC:CODE:ROOT(1)
+        ORG 18
+`??TIMER0_OVF_vect_interrupt::??INTVEC 18`:
+        CODE
+        RJMP    TIMER0_OVF_vect_interrupt
+
+        RSEG NEAR_ID:CODE:NOROOT(0)
+        DATA
+`?<Initializer for <Constant "Node ">>`:
+        DC8 "Node "
+
+        RSEG INITTAB:CODE:NOROOT(0)
+        DATA
+`?<Segment init: NEAR_I>`:
+        DC16    SFE(NEAR_I) - SFB(NEAR_I)
+        DC16    SFB(NEAR_I)
+        DC16    SFB(NEAR_ID)
+        REQUIRE ?need_segment_init
+
+        RSEG INITTAB:CODE:NOROOT(0)
+        DATA
+`?<Segment init: NEAR_Z>`:
+        DC16    SFE(NEAR_Z) - SFB(NEAR_Z)
+        DC16    SFB(NEAR_Z)
+        DC16    0
+        REQUIRE ?need_segment_init
+
+        RSEG NEAR_I:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_I>`
+`?<Constant "Node ">`:
+        DS8 6
+        REQUIRE `?<Initializer for <Constant "Node ">>`
+
+        END
+// 
+//     6 bytes in segment ABSOLUTE
+// 1 084 bytes in segment CODE
+//    12 bytes in segment INITTAB
+//     2 bytes in segment INTVEC
+//     5 bytes in segment NEAR_F
+//     6 bytes in segment NEAR_I
+//     6 bytes in segment NEAR_ID
+//   237 bytes in segment NEAR_Z
+// 
+// 1 095 bytes of CODE memory (+ 14 bytes shared)
+//   243 bytes of DATA memory (+  6 bytes shared)
+//
+//Errors: none
+//Warnings: none

@@ -1,0 +1,1285 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  17:01:07
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\main.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW92E8.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\main.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        --initializers_in_flash --no_cross_call --no_clustering --no_tbaa
+#        --debug -DENABLE_BIT_DEFINITIONS -e --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List\main.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj\main.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\main.c
+      1          /*
+      2            Программа передатчика на ATMEGA8
+      3          */
+      4          #include <iom8.h>
+
+   \                                 In  segment ABSOLUTE, at 0x5b
+   \   union <unnamed> volatile __io _A_GICR
+   \                     _A_GICR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x5a
+   \   union <unnamed> volatile __io _A_GIFR
+   \                     _A_GIFR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x55
+   \   union <unnamed> volatile __io _A_MCUCR
+   \                     _A_MCUCR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x54
+   \   union <unnamed> volatile __io _A_MCUCSR
+   \                     _A_MCUCSR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x41
+   \   union <unnamed> volatile __io _A_WDTCR
+   \                     _A_WDTCR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x38
+   \   union <unnamed> volatile __io _A_PORTB
+   \                     _A_PORTB:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x37
+   \   union <unnamed> volatile __io _A_DDRB
+   \                     _A_DDRB:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x35
+   \   union <unnamed> volatile __io _A_PORTC
+   \                     _A_PORTC:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x34
+   \   union <unnamed> volatile __io _A_DDRC
+   \                     _A_DDRC:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x32
+   \   union <unnamed> volatile __io _A_PORTD
+   \                     _A_PORTD:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x31
+   \   union <unnamed> volatile __io _A_DDRD
+   \                     _A_DDRD:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x30
+   \   union <unnamed> volatile __io _A_PIND
+   \                     _A_PIND:
+   \   00000000                      DS8 1
+      5          #include <ina90.h>
+      6          #include <string.h>
+      7          #include <pgmspace.h>
+      8          #include <stdio.h>
+      9          #include <stdlib.h>
+     10          #include "main.h"
+     11          #include "wrk_params.h"
+     12          #include "USART.h"
+     13          #include "Monitor.h"
+     14          #include "DS1Wire.h"
+     15          #include "ADC.h"
+     16          #include "Timers.h"
+     17          #include "RF_settings.h"
+     18          #include "RF_transmitter.h"
+     19          #include "Util.h"
+     20          #include "rc4.h"
+     21          
+     22          
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     23          __no_init D1W_device devices[MAX_DEVICES];
+   \                     devices:
+   \   00000000                      DS8 32
+     24          
+     25          
+     26          
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     27          char rf_packet[20];
+   \                     rf_packet:
+   \   00000000                      DS8 20
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     28          volatile tflags flags;
+   \                     flags:
+   \   00000000                      DS8 1
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     29          char fswon;
+   \                     fswon:
+   \   00000000                      DS8 1
+     30          
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     31          static unsigned char fbut1; // Флаг нажатия кнопки 1
+   \                     fbut1:
+   \   00000000                      DS8 1
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     32          static unsigned char fbut2; // Флаг нажатия кнопки 2
+   \                     fbut2:
+   \   00000000                      DS8 1
+     33          
+     34          extern __no_init TPARAMS wp;   // Рабочие параметры в RAM
+     35          
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     36          __no_init unsigned long  pack_cnt;
+   \                     pack_cnt:
+   \   00000000                      DS8 4
+     37          
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     38          __no_init unsigned char wdt_div;        // Коэффициент прореживания частоты активизации устройства
+   \                     wdt_div:
+   \   00000000                      DS8 1
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     39          __no_init unsigned char wdtpresc;
+   \                     wdtpresc:
+   \   00000000                      DS8 1
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     40          __no_init unsigned long seed;           // Начальная величина для генератора случайных чисел
+   \                     seed:
+   \   00000000                      DS8 4
+     41          
+     42          
+     43          void          send_temperatures(void);
+     44          unsigned char prepare_temper_pack(D1W_device* device);
+     45          void          send_ADC_results(void);
+     46          void          send_buttons(void);
+     47          void          send_packet(void);
+     48          unsigned char rand_gen_byte(unsigned long* seed);
+     49          void          heart_beat_msg(void);
+     50          /*--------------------------------------------------------------------------------------
+     51          
+     52               MAIN
+     53          
+     54            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     55          void main( void )
+   \                     main:
+     56          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+     57          
+     58            DDRB  = P_LED | P_RFD | P_SWP;
+   \   00000002   E007               LDI     R16, 7
+   \   00000004   BB07               OUT     0x17, R16
+     59            PORTB = 0xFF & (~P_RFD) & (~P_SWP) ;
+   \   00000006   EF0A               LDI     R16, 250
+   \   00000008   BB08               OUT     0x18, R16
+     60          
+     61            DDRC  = 0;
+   \   0000000A   E000               LDI     R16, 0
+   \   0000000C   BB04               OUT     0x14, R16
+     62            PORTC = b01000000;
+   \   0000000E   E400               LDI     R16, 64
+   \   00000010   BB05               OUT     0x15, R16
+     63          
+     64            DDRD  = P_DSD;
+   \   00000012   E100               LDI     R16, 16
+   \   00000014   BB01               OUT     0x11, R16
+     65            PORTD = 0xFF & (~P_TXD) & (~P_JM1) & (~P_JM2) & (~P_JM3); // На TXD и перемычках Z-состояние
+   \   00000016   E10D               LDI     R16, 29
+   \   00000018   BB02               OUT     0x12, R16
+     66          
+     67            WDTCR = b00011000;
+   \   0000001A   E108               LDI     R16, 24
+   \   0000001C   BD01               OUT     0x21, R16
+     68            WDTCR = b00001111;  // Включили WDT на максимальный период
+   \   0000001E   E00F               LDI     R16, 15
+   \   00000020   BD01               OUT     0x21, R16
+     69          
+     70            // Сбросили флаги внешних прерываний.
+     71            GIFR  = b11000000;
+   \   00000022   EC00               LDI     R16, 192
+   \   00000024   BF0A               OUT     0x3A, R16
+     72            // Разрешили внешние прерывания
+     73            GICR  = b11000000;
+   \   00000026   BF0B               OUT     0x3B, R16
+     74          
+     75          
+     76            _SEI();            // До Sleep прерывания должны быть разрешены иначе не будет реакции на внешний INT
+   \   00000028   9478               SEI
+     77          
+     78            // Определим источник сброса
+     79            if ((MCUCSR & (1 << WDRF))!=0)
+   \   0000002A   B704               IN      R16, 0x34
+   \   0000002C   FF03               SBRS    R16, 3
+   \   0000002E   C01F               RJMP    ??main_0
+     80            {
+     81              // Это сброс по WDT
+     82              MCUCSR = 0;
+   \   00000030   E000               LDI     R16, 0
+   \   00000032   BF04               OUT     0x34, R16
+     83              wdtpresc++;
+   \   00000034   9100....           LDS     R16, wdtpresc
+   \   00000038   9503               INC     R16
+   \   0000003A   9300....           STS     wdtpresc, R16
+     84              if (wdtpresc < wdt_div)
+   \   0000003E   9110....           LDS     R17, wdt_div
+   \   00000042   1701               CP      R16, R17
+   \   00000044   F420               BRCC    ??main_1
+     85              {
+     86                // Прошло недостаточно периодов WDT. Возвращаемся снова в Power Down, для этого выставим флаг  fswon.
+     87                // По этому флагу в Power Down перейдем в главном цикле
+     88                fswon = 0;
+   \   00000046   E000               LDI     R16, 0
+   \   00000048   9300....           STS     fswon, R16
+   \   0000004C   C075               RJMP    ??main_2
+     89              }
+     90              else
+     91              {
+     92                // Пришла пора активизировать устройство
+     93                fswon    = 1;
+   \                     ??main_1:
+   \   0000004E   E001               LDI     R16, 1
+   \   00000050   9300....           STS     fswon, R16
+     94                // Пересчитать время для следующей активизации
+     95                wdt_div  = wp.wdt_div_const + (wp.wdt_div_var & rand_gen_byte(&seed));
+   \   00000054   ....               LDI     R16, LOW(seed)
+   \   00000056   ....               LDI     R17, (seed) >> 8
+   \   00000058   ....               RCALL   rand_gen_byte
+   \   0000005A   9110....           LDS     R17, (wp + 3)
+   \   0000005E   9120....           LDS     R18, (wp + 4)
+   \   00000062   2320               AND     R18, R16
+   \   00000064   0F12               ADD     R17, R18
+   \   00000066   9310....           STS     wdt_div, R17
+     96                wdtpresc = 0;
+   \   0000006A   E000               LDI     R16, 0
+   \   0000006C   C063               RJMP    ??main_3
+     97              }
+     98          
+     99            }
+    100            else
+    101            {
+    102              // Это сброс после подачи или сбоя в питании
+    103              wdtpresc = 0;
+   \                     ??main_0:
+   \   0000006E   E000               LDI     R16, 0
+   \   00000070   9300....           STS     wdtpresc, R16
+    104              MCUCSR   = 0;   // Внешние прерывания по низкому уровню на INT0, INT1
+   \   00000074   BF04               OUT     0x34, R16
+    105              fswon    = 1;
+   \   00000076   E001               LDI     R16, 1
+   \   00000078   9300....           STS     fswon, R16
+    106              pack_cnt = 0;
+   \   0000007C   ....               LDI     R30, LOW(pack_cnt)
+   \   0000007E   ....               LDI     R31, (pack_cnt) >> 8
+   \   00000080   E000               LDI     R16, 0
+   \   00000082   8300               ST      Z, R16
+   \   00000084   8301               STD     Z+1, R16
+   \   00000086   8302               STD     Z+2, R16
+   \   00000088   8303               STD     Z+3, R16
+    107          
+    108              USART_Init( 16 );  // 115200 при кварце 16 Мгц
+   \   0000008A   E100               LDI     R16, 16
+   \   0000008C   E010               LDI     R17, 0
+   \   0000008E   ....               RCALL   USART_Init
+    109          
+    110              // Инициализируем оперативные переменные из EEPROM
+    111              if (Restore_settings_from_eeprom()== 0)
+   \   00000090   ....               RCALL   Restore_settings_from_eeprom
+   \   00000092   2300               TST     R16
+   \   00000094   F421               BRNE    ??main_4
+    112              {
+    113                Restore_default_settings();
+   \   00000096   ....               RCALL   Restore_default_settings
+    114                USART_sendstr("CRC error!\n\r");
+   \   00000098   ....               LDI     R16, LOW(`?<Constant "CRC error!\\n\\r">`)
+   \   0000009A   ....               LDI     R17, (`?<Constant "CRC error!\\n\\r">`) >> 8
+   \   0000009C   C00D               RJMP    ??main_5
+    115              }
+    116              else
+    117              {
+    118                if (wp.version != PRG_VERSION)
+   \                     ??main_4:
+   \   0000009E   ....               LDI     R30, LOW(wp)
+   \   000000A0   ....               LDI     R31, (wp) >> 8
+   \   000000A2   8100               LD      R16, Z
+   \   000000A4   8111               LDD     R17, Z+1
+   \   000000A6   360A               CPI     R16, 106
+   \   000000A8   4010               SBCI    R17, 0
+   \   000000AA   F021               BREQ    ??main_6
+    119                {
+    120                  Restore_default_settings();
+   \   000000AC   ....               RCALL   Restore_default_settings
+    121                  USART_sendstr("Ver. error!\n\r");
+   \   000000AE   ....               LDI     R16, LOW(`?<Constant "Ver. error!\\n\\r">`)
+   \   000000B0   ....               LDI     R17, (`?<Constant "Ver. error!\\n\\r">`) >> 8
+   \   000000B2   C002               RJMP    ??main_5
+    122                }
+    123                else
+    124                {
+    125                  USART_sendstr("EEPROM Ok!\n\r");
+   \                     ??main_6:
+   \   000000B4   ....               LDI     R16, LOW(`?<Constant "EEPROM Ok!\\n\\r">`)
+   \   000000B6   ....               LDI     R17, (`?<Constant "EEPROM Ok!\\n\\r">`) >> 8
+   \                     ??main_5:
+   \   000000B8   ....               RCALL   USART_sendstr
+    126                }
+    127              }
+    128              USART_sendstr("Settings restored!\n\r");
+   \   000000BA   ....               LDI     R16, LOW(`?<Constant "Settings restored!\\n\\r">`)
+   \   000000BC   ....               LDI     R17, (`?<Constant "Settings restored!\\n\\r">`) >> 8
+   \   000000BE   ....               RCALL   USART_sendstr
+    129          
+    130              seed     = 0;
+   \   000000C0   ....               LDI     R30, LOW(seed)
+   \   000000C2   ....               LDI     R31, (seed) >> 8
+   \   000000C4   E000               LDI     R16, 0
+   \   000000C6   8300               ST      Z, R16
+   \   000000C8   8301               STD     Z+1, R16
+   \   000000CA   8302               STD     Z+2, R16
+   \   000000CC   8303               STD     Z+3, R16
+    131              D1W_Init();
+   \   000000CE   ....               RCALL   D1W_Init
+    132              if (DS1W_SearchBuses(devices, MAX_DEVICES)==SEARCH_SUCCESSFUL)
+   \   000000D0   E024               LDI     R18, 4
+   \   000000D2   ....               LDI     R16, LOW(devices)
+   \   000000D4   ....               LDI     R17, (devices) >> 8
+   \   000000D6   ....               RCALL   DS1W_SearchBuses
+   \   000000D8   2300               TST     R16
+   \   000000DA   F4B1               BRNE    ??main_7
+    133              {
+    134                D1W_device *dev;
+    135                dev = DS1W_FindFamily(DS1820_FAMILY_ID, devices, MAX_DEVICES);
+   \   000000DC   E014               LDI     R17, 4
+   \   000000DE   ....               LDI     R18, LOW(devices)
+   \   000000E0   ....               LDI     R19, (devices) >> 8
+   \   000000E2   E100               LDI     R16, 16
+   \   000000E4   ....               RCALL   DS1W_FindFamily
+   \   000000E6   01F8               MOVW    R31:R30, R17:R16
+    136                if (dev!=NULL)
+   \   000000E8   2B01               OR      R16, R17
+   \   000000EA   F071               BREQ    ??main_7
+    137                {
+    138                	// Начальная величина для генератора случайных чисел
+    139                	// вычисляеться на основе уникальной части идентификатора первого обнаруженного чипа DS1820
+    140                  seed = (((unsigned long)(*dev).id[1]<<24) ^ ((unsigned long)(*dev).id[5]<<24)) |
+    141                         (((unsigned long)(*dev).id[2]<<16) ^ ((unsigned long)(*dev).id[6]<<16)) |
+    142                         ((unsigned long)(*dev).id[3]<<8)  |
+    143                         ((unsigned long)(*dev).id[4]);
+   \   000000EC   8141               LDD     R20, Z+1
+   \   000000EE   8105               LDD     R16, Z+5
+   \   000000F0   2740               EOR     R20, R16
+   \   000000F2   8122               LDD     R18, Z+2
+   \   000000F4   8106               LDD     R16, Z+6
+   \   000000F6   2720               EOR     R18, R16
+   \   000000F8   8113               LDD     R17, Z+3
+   \   000000FA   8104               LDD     R16, Z+4
+   \   000000FC   ....               LDI     R30, LOW(seed)
+   \   000000FE   ....               LDI     R31, (seed) >> 8
+   \   00000100   8300               ST      Z, R16
+   \   00000102   8311               STD     Z+1, R17
+   \   00000104   8322               STD     Z+2, R18
+   \   00000106   8343               STD     Z+3, R20
+    144                }
+    145              }
+    146              wdt_div = wp.wdt_div_const + (wp.wdt_div_var & rand_gen_byte(&seed));
+   \                     ??main_7:
+   \   00000108   ....               LDI     R16, LOW(seed)
+   \   0000010A   ....               LDI     R17, (seed) >> 8
+   \   0000010C   ....               RCALL   rand_gen_byte
+   \   0000010E   9110....           LDS     R17, (wp + 3)
+   \   00000112   9120....           LDS     R18, (wp + 4)
+   \   00000116   2320               AND     R18, R16
+   \   00000118   0F12               ADD     R17, R18
+   \   0000011A   9310....           STS     wdt_div, R17
+   \   0000011E   C00C               RJMP    ??main_2
+    147          
+    148            }
+    149          
+    150            for( ; ; )        /* Forever */
+    151            {
+    152              unsigned char tmp;
+    153              USART_Init( 16 );  // 115200 при кварце 16 Мгц
+    154          
+    155              if (fswon!=0)  // На промежеточных активизациях ничего не делать
+    156              {
+    157                D1W_Init();
+    158          
+    159                if ((wp.flags & HEART_BEAT_DISABLED)==0) heart_beat_msg();
+    160                if ((wp.flags & DS1WIRE_DISABLED)   ==0) send_temperatures();
+    161                if ((wp.flags & ADC_DISABLED)       ==0) send_ADC_results();
+    162              }
+    163          
+    164              do
+    165              {
+    166              	if (DataInReceiveBuffer()!=0) terminal();
+    167              }	
+    168              while ((PIND & b00001100) != b00001100); // Ожидать пока не отпустят кнопки.
+    169                                                       // Сработка WDT приведет к выходу из цикла.
+    170          
+    171              // Выключить UART, чтобы он не мешал выставить нужный уровень на линии TXD
+    172              USART_close();
+    173          
+    174              // Привести линии портов в состояние с наименьшим потреблением
+    175              PORTB = 0xFF & (~P_RFD) & ~(P_SWP) ;
+    176              DDRD  = P_TXD;
+    177              PORTD = P_BT1 | P_BT2;
+    178          
+    179              // Установим таймер WDT
+    180          
+    181              tmp = b00001000 | (wp.wdt_period & 0x07); // Подготовим значения для загрузки в WDT
+    182              __watchdog_reset();
+    183              WDTCR = b00011000;
+    184              WDTCR = tmp;        // Включили WDT на заданный период
+    185          
+    186              // Сбросили флаги внешних прерываний.
+    187              GIFR  = b11000000;
+    188          
+    189              if ((wp.flags & BUTTONS_DISABLED)==0)
+    190                GICR  = b11000000;  // Разрешили внешние прерывания
+    191              else
+    192                GICR  = b00000000;  // Запретили внешние прерывания
+   \                     ??main_8:
+   \   00000120   E000               LDI     R16, 0
+   \                     ??main_9:
+   \   00000122   BF0B               OUT     0x3B, R16
+    193          
+    194              // Выход в режим Power Down
+    195              MCUCR = b10100000; // Внешние прерывания по низкому уровню на INT0, INT1
+   \   00000124   EA00               LDI     R16, 160
+   \   00000126   BF05               OUT     0x35, R16
+    196              __sleep();
+   \   00000128   9588               SLEEP
+    197              // Режим Power Down прерываеться и переход к посылке состояния кнопок.
+    198              __watchdog_reset();
+   \   0000012A   95A8               WDR
+    199              send_buttons();
+   \   0000012C   ....               RCALL   send_buttons
+    200              fswon    = 0;
+   \   0000012E   E000               LDI     R16, 0
+   \   00000130   9300....           STS     fswon, R16
+    201              wdtpresc = 0;
+   \                     ??main_3:
+   \   00000134   9300....           STS     wdtpresc, R16
+   \                     ??main_2:
+   \   00000138   E100               LDI     R16, 16
+   \   0000013A   E010               LDI     R17, 0
+   \   0000013C   ....               RCALL   USART_Init
+   \   0000013E   9100....           LDS     R16, fswon
+   \   00000142   2300               TST     R16
+   \   00000144   F079               BREQ    ??main_10
+   \   00000146   ....               RCALL   D1W_Init
+   \   00000148   ....               LDI     R26, LOW(wp)
+   \   0000014A   ....               LDI     R27, (wp) >> 8
+   \   0000014C   01FD               MOVW    R31:R30, R27:R26
+   \   0000014E   8107               LDD     R16, Z+7
+   \   00000150   FF03               SBRS    R16, 3
+   \   00000152   ....               RCALL   heart_beat_msg
+   \                     ??main_11:
+   \   00000154   01FD               MOVW    R31:R30, R27:R26
+   \   00000156   8107               LDD     R16, Z+7
+   \   00000158   FF01               SBRS    R16, 1
+   \   0000015A   ....               RCALL   send_temperatures
+   \                     ??main_12:
+   \   0000015C   01FD               MOVW    R31:R30, R27:R26
+   \   0000015E   8107               LDD     R16, Z+7
+   \   00000160   FF00               SBRS    R16, 0
+   \   00000162   ....               RCALL   send_ADC_results
+   \                     ??main_10:
+   \   00000164   ....               RCALL   DataInReceiveBuffer
+   \   00000166   2300               TST     R16
+   \   00000168   F009               BREQ    ??main_13
+   \   0000016A   ....               RCALL   terminal
+   \                     ??main_13:
+   \   0000016C   B300               IN      R16, 0x10
+   \   0000016E   700C               ANDI    R16, 0x0C
+   \   00000170   300C               CPI     R16, 12
+   \   00000172   F7C1               BRNE    ??main_10
+   \   00000174   ....               RCALL   USART_close
+   \   00000176   EF0A               LDI     R16, 250
+   \   00000178   BB08               OUT     0x18, R16
+   \   0000017A   E002               LDI     R16, 2
+   \   0000017C   BB01               OUT     0x11, R16
+   \   0000017E   E00C               LDI     R16, 12
+   \   00000180   BB02               OUT     0x12, R16
+   \   00000182   ....               LDI     R30, LOW(wp)
+   \   00000184   ....               LDI     R31, (wp) >> 8
+   \   00000186   8102               LDD     R16, Z+2
+   \   00000188   7007               ANDI    R16, 0x07
+   \   0000018A   6008               ORI     R16, 0x08
+   \   0000018C   95A8               WDR
+   \   0000018E   E118               LDI     R17, 24
+   \   00000190   BD11               OUT     0x21, R17
+   \   00000192   BD01               OUT     0x21, R16
+   \   00000194   EC00               LDI     R16, 192
+   \   00000196   BF0A               OUT     0x3A, R16
+   \   00000198   8107               LDD     R16, Z+7
+   \   0000019A   FD02               SBRC    R16, 2
+   \   0000019C   CFC1               RJMP    ??main_8
+   \   0000019E   EC00               LDI     R16, 192
+   \   000001A0   CFC0               RJMP    ??main_9
+   \   000001A2                      REQUIRE _A_DDRB
+   \   000001A2                      REQUIRE _A_PORTB
+   \   000001A2                      REQUIRE _A_DDRC
+   \   000001A2                      REQUIRE _A_PORTC
+   \   000001A2                      REQUIRE _A_DDRD
+   \   000001A2                      REQUIRE _A_PORTD
+   \   000001A2                      REQUIRE _A_WDTCR
+   \   000001A2                      REQUIRE _A_GIFR
+   \   000001A2                      REQUIRE _A_GICR
+   \   000001A2                      REQUIRE _A_MCUCSR
+   \   000001A2                      REQUIRE _A_PIND
+   \   000001A2                      REQUIRE _A_MCUCR
+    202            }
+    203          }
+    204          
+    205          /*--------------------------------------------------------------------------------------
+    206             Сформироать первый байт пакета с информацией о типе пакета и номере передатчика
+    207            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    208          unsigned char get_pack_first_byte(unsigned char type)
+   \                     get_pack_first_byte:
+    209          {
+    210            unsigned char b;
+    211          
+    212            // Определить и записать номер передатчика
+    213            PORTD |= (P_JM1 | P_JM2 | P_JM3); // Включим на перемычках Pull-Up
+   \   00000000   B312               IN      R17, 0x12
+   \   00000002   6E10               ORI     R17, 0xE0
+   \   00000004   BB12               OUT     0x12, R17
+    214          
+    215            __delay_cycles(16); // Задержка для установки уровня на 1 мкс
+   \   00000006   E015               LDI     R17, 5
+   \   00000008   951A               DEC     R17
+   \   0000000A   F7F1               BRNE    $-2
+   \   0000000C   0000               NOP
+    216          
+    217            b = (PIND >> 5) & 0x07;
+   \   0000000E   B320               IN      R18, 0x10
+    218          
+    219            PORTD &= ((~P_JM1) & (~P_JM2) & (~P_JM3)) ; // Выключаем на перемычках Pull-Up
+   \   00000010   B312               IN      R17, 0x12
+   \   00000012   711F               ANDI    R17, 0x1F
+   \   00000014   BB12               OUT     0x12, R17
+    220            // Записать тип пакета
+    221            b |= (type << 4);
+    222            return b;
+   \   00000016   9522               SWAP    R18
+   \   00000018   702F               ANDI    R18, 0x0F
+   \   0000001A   9526               LSR     R18
+   \   0000001C   9502               SWAP    R16
+   \   0000001E   7F00               ANDI    R16, 0xF0
+   \   00000020   2B02               OR      R16, R18
+   \   00000022   9508               RET
+   \   00000024                      REQUIRE _A_PORTD
+   \   00000024                      REQUIRE _A_PIND
+    223          }
+    224          
+    225          
+    226          
+    227          
+    228          /*--------------------------------------------------------------------------------------
+    229              Выслать показания всех датчиков температуры обнаруженных в 1-Wire сети
+    230            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    231          void send_temperatures(void)
+   \                     send_temperatures:
+    232          {
+   \   00000000   ....               RCALL   ?PROLOGUE2_L09
+    233            unsigned char i;
+    234          
+    235            for (i=0;i<MAX_DEVICES;i++)
+   \   00000002   E090               LDI     R25, 0
+   \   00000004   E084               LDI     R24, 4
+    236            {
+    237              if (devices[i].id[0] == DS1820_FAMILY_ID)
+   \                     ??send_temperatures_0:
+   \   00000006   E008               LDI     R16, 8
+   \   00000008   9F90               MUL     R25, R16
+   \   0000000A   ....               LDI     R30, LOW(devices)
+   \   0000000C   ....               LDI     R31, (devices) >> 8
+   \   0000000E   0DE0               ADD     R30, R0
+   \   00000010   1DF1               ADC     R31, R1
+   \   00000012   8100               LD      R16, Z
+   \   00000014   3100               CPI     R16, 16
+   \   00000016   F451               BRNE    ??send_temperatures_1
+    238              {
+    239                if (prepare_temper_pack(&devices[i])==FALSE)  // Подготовим пакет для отправки
+   \   00000018   018F               MOVW    R17:R16, R31:R30
+   \   0000001A   ....               RCALL   prepare_temper_pack
+   \   0000001C   2300               TST     R16
+   \   0000001E   F429               BRNE    ??send_temperatures_2
+    240                {
+    241                   DS1W_SearchBuses(devices, MAX_DEVICES);
+   \   00000020   E024               LDI     R18, 4
+   \   00000022   ....               LDI     R16, LOW(devices)
+   \   00000024   ....               LDI     R17, (devices) >> 8
+   \   00000026   ....               RCALL   DS1W_SearchBuses
+    242                   return;
+   \   00000028   C004               RJMP    ??send_temperatures_3
+    243                }
+    244                else
+    245                {
+    246                  send_packet();
+   \                     ??send_temperatures_2:
+   \   0000002A   ....               RCALL   send_packet
+    247                }
+    248              }
+    249            }
+   \                     ??send_temperatures_1:
+   \   0000002C   9593               INC     R25
+   \   0000002E   958A               DEC     R24
+   \   00000030   F751               BRNE    ??send_temperatures_0
+    250          }
+   \                     ??send_temperatures_3:
+   \   00000032                      REQUIRE ?Subroutine1
+   \   00000032                      ;               // Fall through to label ?Subroutine1
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine1:
+   \   00000000   E0E2               LDI     R30, 2
+   \   00000002   ....               RJMP    ?EPILOGUE_B2_L09
+    251          
+    252          
+    253          /*--------------------------------------------------------------------------------------
+    254             Снять показания температуры с датчика и сформировать пакет для отправки
+    255          
+    256             Возвращает: TRUE если температура прочитана успешно
+    257            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    258          unsigned char prepare_temper_pack(D1W_device* device)
+   \                     prepare_temper_pack:
+    259          {
+   \   00000000   ....               RCALL   ?PROLOGUE2_L09
+   \   00000002   01C8               MOVW    R25:R24, R17:R16
+   \   00000004   E000               LDI     R16, 0
+    260            signed int temperature;
+    261            unsigned char i;
+    262          
+    263            rf_packet[0] = get_pack_first_byte(PACK_TEMPER);
+   \   00000006   ....               RCALL   get_pack_first_byte
+   \   00000008   9300....           STS     rf_packet, R16
+    264          
+    265            temperature = DS1820_ReadTemperature((*device).id);
+   \   0000000C   018C               MOVW    R17:R16, R25:R24
+   \   0000000E   ....               RCALL   DS1820_ReadTemperature
+   \   00000010   01A8               MOVW    R21:R20, R17:R16
+    266          
+    267            if (temperature == -1000) return FALSE;
+   \   00000012   3108               CPI     R16, 24
+   \   00000014   4F1C               SBCI    R17, 252
+   \   00000016   F411               BRNE    ??prepare_temper_pack_0
+   \   00000018   E000               LDI     R16, 0
+   \   0000001A   C014               RJMP    ??prepare_temper_pack_1
+    268          
+    269          
+    270            // Идентификатор DS1820 состоит из 48-и бит
+    271            for (i=1;i<7;i++) rf_packet[i] = (*device).id[i];
+   \                     ??prepare_temper_pack_0:
+   \   0000001C   E001               LDI     R16, 1
+   \   0000001E   E016               LDI     R17, 6
+   \   00000020   E030               LDI     R19, 0
+   \                     ??prepare_temper_pack_2:
+   \   00000022   01FC               MOVW    R31:R30, R25:R24
+   \   00000024   0FE0               ADD     R30, R16
+   \   00000026   1FF3               ADC     R31, R19
+   \   00000028   8160               LD      R22, Z
+   \   0000002A   2FE0               MOV     R30, R16
+   \   0000002C   E0F0               LDI     R31, 0
+   \   0000002E   ....               SUBI    R30, LOW((-(rf_packet) & 0xFFFF))
+   \   00000030   ....               SBCI    R31, (-(rf_packet) & 0xFFFF) >> 8
+   \   00000032   8360               ST      Z, R22
+   \   00000034   9503               INC     R16
+   \   00000036   951A               DEC     R17
+   \   00000038   F7A1               BRNE    ??prepare_temper_pack_2
+    272            rf_packet[7] = temperature >> 8;
+   \   0000003A   9350....           STS     (rf_packet + 7), R21
+    273            rf_packet[8] = temperature & 0xFF;
+   \   0000003E   9340....           STS     (rf_packet + 8), R20
+    274          
+    275          
+    276            return TRUE;
+   \   00000042   E001               LDI     R16, 1
+   \                     ??prepare_temper_pack_1:
+   \   00000044   ....               RJMP    ?Subroutine1
+    277          }
+    278          
+    279          
+    280          
+    281          /*--------------------------------------------------------------------------------------
+    282              Выслать результаты измерения ЦАП во всех каналах
+    283            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    284          void send_ADC_results(void)
+   \                     send_ADC_results:
+    285          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+    286            unsigned char i,j,k, bitcnt;
+    287            unsigned int res;
+    288          
+    289          
+    290            ADC_init();
+   \   00000002   ....               RCALL   ADC_init
+    291            ADC_get_select_ch(0); // Проведем одно пустое измерение
+   \   00000004   E000               LDI     R16, 0
+   \   00000006   ....               RCALL   ADC_get_select_ch
+    292          
+    293            rf_packet[0] = get_pack_first_byte(PACK_ADC);
+   \   00000008   E002               LDI     R16, 2
+   \   0000000A   ....               RCALL   get_pack_first_byte
+   \   0000000C   9300....           STS     rf_packet, R16
+    294          
+    295            for (i=1;i<9;i++) rf_packet[i]=0;
+   \   00000010   E081               LDI     R24, 1
+   \   00000012   E008               LDI     R16, 8
+   \   00000014   E090               LDI     R25, 0
+   \                     ??send_ADC_results_0:
+   \   00000016   01FC               MOVW    R31:R30, R25:R24
+   \   00000018   ....               SUBI    R30, LOW((-(rf_packet) & 0xFFFF))
+   \   0000001A   ....               SBCI    R31, (-(rf_packet) & 0xFFFF) >> 8
+   \   0000001C   8390               ST      Z, R25
+   \   0000001E   9583               INC     R24
+   \   00000020   950A               DEC     R16
+   \   00000022   F7C9               BRNE    ??send_ADC_results_0
+    296            k      = 1;
+   \   00000024   E0A1               LDI     R26, 1
+    297            bitcnt = 0;
+    298            for (i=0;i<6;i++)
+   \   00000026   E080               LDI     R24, 0
+   \   00000028   E0B6               LDI     R27, 6
+   \   0000002A   C002               RJMP    ??send_ADC_results_1
+    299            {
+    300              if ((i==0) && ((wp.flags & TRANSMIT_REFCOD)!=0))
+   \                     ??send_ADC_results_2:
+   \   0000002C   2388               TST     R24
+   \   0000002E   F441               BRNE    ??send_ADC_results_3
+   \                     ??send_ADC_results_1:
+   \   00000030   ....               LDI     R30, LOW(wp)
+   \   00000032   ....               LDI     R31, (wp) >> 8
+   \   00000034   8107               LDD     R16, Z+7
+   \   00000036   FF04               SBRS    R16, 4
+   \   00000038   C003               RJMP    ??send_ADC_results_3
+    301                res = wp.refcod;
+   \   0000003A   8523               LDD     R18, Z+11
+   \   0000003C   8534               LDD     R19, Z+12
+   \   0000003E   C003               RJMP    ??send_ADC_results_4
+    302              else
+    303                res = ADC_get_select_ch(i);  // Получим результат преобразования в канале
+   \                     ??send_ADC_results_3:
+   \   00000040   2F08               MOV     R16, R24
+   \   00000042   ....               RCALL   ADC_get_select_ch
+   \   00000044   0198               MOVW    R19:R18, R17:R16
+    304              // Запакуем результат в отправляемый пакет
+    305              for (j=0;j<10;j++)  // Пройдем все биты результата
+   \                     ??send_ADC_results_4:
+   \   00000046   E00A               LDI     R16, 10
+   \   00000048   E050               LDI     R21, 0
+    306              {
+    307                if (bitcnt == 8)
+   \                     ??send_ADC_results_5:
+   \   0000004A   3098               CPI     R25, 8
+   \   0000004C   F419               BRNE    ??send_ADC_results_6
+    308                {
+    309                  k++;
+   \   0000004E   95A3               INC     R26
+    310                  bitcnt=0;
+   \   00000050   E091               LDI     R25, 1
+   \   00000052   C008               RJMP    ??send_ADC_results_7
+    311                }
+    312                else
+    313                {
+    314                  rf_packet[k] <<=1;
+   \                     ??send_ADC_results_6:
+   \   00000054   ....               LDI     R30, LOW(rf_packet)
+   \   00000056   ....               LDI     R31, (rf_packet) >> 8
+   \   00000058   0FEA               ADD     R30, R26
+   \   0000005A   1FF5               ADC     R31, R21
+   \   0000005C   8110               LD      R17, Z
+   \   0000005E   0F11               LSL     R17
+   \   00000060   8310               ST      Z, R17
+   \   00000062   9593               INC     R25
+    315                }
+    316                if ((res & 0x0200)!=0)  rf_packet[k]++;
+   \                     ??send_ADC_results_7:
+   \   00000064   FB31               BST     R19, 1
+   \   00000066   F43E               BRTC    ??send_ADC_results_8
+   \   00000068   E0F0               LDI     R31, 0
+   \   0000006A   2FEA               MOV     R30, R26
+   \   0000006C   ....               SUBI    R30, LOW((-(rf_packet) & 0xFFFF))
+   \   0000006E   ....               SBCI    R31, (-(rf_packet) & 0xFFFF) >> 8
+   \   00000070   8110               LD      R17, Z
+   \   00000072   9513               INC     R17
+   \   00000074   8310               ST      Z, R17
+    317                res <<=1;
+   \                     ??send_ADC_results_8:
+   \   00000076   0F22               LSL     R18
+   \   00000078   1F33               ROL     R19
+    318                bitcnt++;
+    319          
+    320              }
+   \   0000007A   950A               DEC     R16
+   \   0000007C   F731               BRNE    ??send_ADC_results_5
+    321            }
+   \   0000007E   9583               INC     R24
+   \   00000080   95BA               DEC     R27
+   \   00000082   F6A1               BRNE    ??send_ADC_results_2
+    322            send_packet();
+   \   00000084   ....               RCALL   send_packet
+    323            ADC_switch_off();
+   \   00000086   ....               RCALL   ADC_switch_off
+    324          
+    325          }
+   \   00000088                      REQUIRE ?Subroutine0
+   \   00000088                      ;               // Fall through to label ?Subroutine0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine0:
+   \   00000000   E0E4               LDI     R30, 4
+   \   00000002   ....               RJMP    ?EPILOGUE_B4_L09
+    326          
+    327          
+    328          /*--------------------------------------------------------------------------------------
+    329              Выслать состояние кнопок
+    330            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    331          void send_buttons(void)
+   \                     send_buttons:
+    332          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+    333            unsigned char i;
+    334            rf_packet[0] = get_pack_first_byte(PACK_BUTTONS);
+   \   00000002   ....               LDI     R30, LOW(rf_packet)
+   \   00000004   ....               LDI     R31, (rf_packet) >> 8
+   \   00000006   E001               LDI     R16, 1
+   \   00000008   ....               RCALL   get_pack_first_byte
+   \   0000000A   8300               ST      Z, R16
+    335            for (i=1;i<9;i++) rf_packet[i]=0;
+   \   0000000C   E021               LDI     R18, 1
+   \   0000000E   E008               LDI     R16, 8
+   \   00000010   E030               LDI     R19, 0
+   \                     ??send_buttons_0:
+   \   00000012   01DF               MOVW    R27:R26, R31:R30
+   \   00000014   0FA2               ADD     R26, R18
+   \   00000016   1FB3               ADC     R27, R19
+   \   00000018   933C               ST      X, R19
+   \   0000001A   9523               INC     R18
+   \   0000001C   950A               DEC     R16
+   \   0000001E   F7C9               BRNE    ??send_buttons_0
+    336            if (fbut1 !=0) rf_packet[1] = 0xFF;
+   \   00000020   9100....           LDS     R16, fbut1
+   \   00000024   2300               TST     R16
+   \   00000026   F011               BREQ    ??send_buttons_1
+   \   00000028   EF0F               LDI     R16, 255
+   \   0000002A   8301               STD     Z+1, R16
+    337            if (fbut2 !=0) rf_packet[2] = 0xFF;
+   \                     ??send_buttons_1:
+   \   0000002C   9100....           LDS     R16, fbut2
+   \   00000030   2300               TST     R16
+   \   00000032   F011               BREQ    ??send_buttons_2
+   \   00000034   EF0F               LDI     R16, 255
+   \   00000036   8302               STD     Z+2, R16
+    338            fbut1 = 0;
+   \                     ??send_buttons_2:
+   \   00000038   9330....           STS     fbut1, R19
+    339            fbut2 = 0;
+   \   0000003C   9330....           STS     fbut2, R19
+    340            send_packet();
+   \   00000040   ....               RCALL   send_packet
+    341            GIFR  = b11000000; // Стереть флаги прерываний
+   \   00000042   EC00               LDI     R16, 192
+   \   00000044   BF0A               OUT     0x3A, R16
+    342          }
+   \   00000046   ....               RJMP    ?Subroutine0
+   \   00000048                      REQUIRE _A_GIFR
+    343          
+    344          
+    345          
+    346          /*--------------------------------------------------------------------------------------
+    347              Выслать подготовленный пакет
+    348            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    349          void send_packet(void)
+   \                     send_packet:
+    350          {
+    351            PORTB &= ~P_LED;
+   \   00000000   98C1               CBI     0x18, 0x01
+    352            RF_send(rf_packet,9);
+   \   00000002   E029               LDI     R18, 9
+   \   00000004   ....               LDI     R16, LOW(rf_packet)
+   \   00000006   ....               LDI     R17, (rf_packet) >> 8
+   \   00000008   ....               RCALL   RF_send
+    353            while (flags.done!=1);
+   \                     ??send_packet_0:
+   \   0000000A   9100....           LDS     R16, flags
+   \   0000000E   FF02               SBRS    R16, 2
+   \   00000010   CFFC               RJMP    ??send_packet_0
+    354            PORTB |= P_LED;
+   \   00000012   9AC1               SBI     0x18, 0x01
+    355          }
+   \   00000014   9508               RET
+   \   00000016                      REQUIRE _A_PORTB
+    356          
+    357          
+    358          /*--------------------------------------------------------------------------------------
+    359              Генератор случайного байта
+    360            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    361          unsigned char rand_gen_byte(unsigned long* seed)
+   \                     rand_gen_byte:
+    362          {
+   \   00000000   01F8               MOVW    R31:R30, R17:R16
+    363            *seed = 1664525ul*(* seed) + 1013904223ul;
+   \   00000002   8100               LD      R16, Z
+   \   00000004   8111               LDD     R17, Z+1
+   \   00000006   8122               LDD     R18, Z+2
+   \   00000008   8133               LDD     R19, Z+3
+   \   0000000A   E04D               LDI     R20, 13
+   \   0000000C   E656               LDI     R21, 102
+   \   0000000E   E169               LDI     R22, 25
+   \   00000010   E070               LDI     R23, 0
+   \   00000012   ....               RCALL   ?L_EC_MUL_L03
+   \   00000014   5A01               SUBI    R16, 161
+   \   00000016   401C               SBCI    R17, 12
+   \   00000018   4921               SBCI    R18, 145
+   \   0000001A   4C33               SBCI    R19, 195
+   \   0000001C   8300               ST      Z, R16
+   \   0000001E   8311               STD     Z+1, R17
+   \   00000020   8322               STD     Z+2, R18
+   \   00000022   8333               STD     Z+3, R19
+    364            return ((*seed) >> 24);
+   \   00000024   2F03               MOV     R16, R19
+   \   00000026   9508               RET
+    365          }
+    366          
+    367          /*--------------------------------------------------------------------------------------
+    368              Отправка в последовательный порт контрольного сообщения
+    369            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    370          void heart_beat_msg(void)
+   \                     heart_beat_msg:
+    371          {
+    372             pack_cnt++;
+   \   00000000   ....               LDI     R30, LOW(pack_cnt)
+   \   00000002   ....               LDI     R31, (pack_cnt) >> 8
+   \   00000004   8100               LD      R16, Z
+   \   00000006   8111               LDD     R17, Z+1
+   \   00000008   8122               LDD     R18, Z+2
+   \   0000000A   8133               LDD     R19, Z+3
+   \   0000000C   5F0F               SUBI    R16, 255
+   \   0000000E   4F1F               SBCI    R17, 255
+   \   00000010   4F2F               SBCI    R18, 255
+   \   00000012   4F3F               SBCI    R19, 255
+   \   00000014   8300               ST      Z, R16
+   \   00000016   8311               STD     Z+1, R17
+   \   00000018   8322               STD     Z+2, R18
+   \   0000001A   8333               STD     Z+3, R19
+    373             USART_Transmit(hex_to_ascii(pack_cnt>>28));
+   \   0000001C   9536               LSR     R19
+   \   0000001E   9536               LSR     R19
+   \   00000020   9536               LSR     R19
+   \   00000022   9536               LSR     R19
+   \   00000024   2F03               MOV     R16, R19
+   \   00000026   ....               RCALL   hex_to_ascii
+   \   00000028   ....               RCALL   USART_Transmit
+    374             USART_Transmit(hex_to_ascii(pack_cnt>>24));
+   \   0000002A   9100....           LDS     R16, (pack_cnt + 3)
+   \   0000002E   ....               RCALL   hex_to_ascii
+   \   00000030   ....               RCALL   USART_Transmit
+    375             USART_Transmit(hex_to_ascii(pack_cnt>>20));
+   \   00000032   E144               LDI     R20, 20
+   \   00000034   ....               LDI     R30, LOW(pack_cnt)
+   \   00000036   ....               LDI     R31, (pack_cnt) >> 8
+   \   00000038   8100               LD      R16, Z
+   \   0000003A   8111               LDD     R17, Z+1
+   \   0000003C   8122               LDD     R18, Z+2
+   \   0000003E   8133               LDD     R19, Z+3
+   \   00000040   ....               RCALL   ?UL_SHR_L03
+   \   00000042   ....               RCALL   hex_to_ascii
+   \   00000044   ....               RCALL   USART_Transmit
+    376             USART_Transmit(hex_to_ascii(pack_cnt>>16));
+   \   00000046   9100....           LDS     R16, (pack_cnt + 2)
+   \   0000004A   ....               RCALL   hex_to_ascii
+   \   0000004C   ....               RCALL   USART_Transmit
+    377             USART_Transmit(hex_to_ascii(pack_cnt>>12));
+   \   0000004E   E04C               LDI     R20, 12
+   \   00000050   ....               LDI     R30, LOW(pack_cnt)
+   \   00000052   ....               LDI     R31, (pack_cnt) >> 8
+   \   00000054   8100               LD      R16, Z
+   \   00000056   8111               LDD     R17, Z+1
+   \   00000058   8122               LDD     R18, Z+2
+   \   0000005A   8133               LDD     R19, Z+3
+   \   0000005C   ....               RCALL   ?UL_SHR_L03
+   \   0000005E   ....               RCALL   hex_to_ascii
+   \   00000060   ....               RCALL   USART_Transmit
+    378             USART_Transmit(hex_to_ascii(pack_cnt>>8));
+   \   00000062   9100....           LDS     R16, (pack_cnt + 1)
+   \   00000066   ....               RCALL   hex_to_ascii
+   \   00000068   ....               RCALL   USART_Transmit
+    379             USART_Transmit(hex_to_ascii(pack_cnt>>4));
+   \   0000006A   ....               LDI     R30, LOW(pack_cnt)
+   \   0000006C   ....               LDI     R31, (pack_cnt) >> 8
+   \   0000006E   8100               LD      R16, Z
+   \   00000070   8111               LDD     R17, Z+1
+   \   00000072   E044               LDI     R20, 4
+   \   00000074   ....               RCALL   ?US_SHR_L02
+   \   00000076   ....               RCALL   hex_to_ascii
+   \   00000078   ....               RCALL   USART_Transmit
+    380             USART_Transmit(hex_to_ascii(pack_cnt));
+   \   0000007A   9100....           LDS     R16, pack_cnt
+   \   0000007E   ....               RCALL   hex_to_ascii
+   \   00000080   ....               RCALL   USART_Transmit
+    381             USART_Transmit('\n');
+   \   00000082   E00A               LDI     R16, 10
+   \   00000084   ....               RCALL   USART_Transmit
+    382             USART_Transmit('\r');
+   \   00000086   E00D               LDI     R16, 13
+   \   00000088   ....               RJMP    USART_Transmit
+    383          }
+    384          
+    385          
+    386          #pragma vector=INT0_vect
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    387          __interrupt void INT0_vect_interrupt( void )
+   \                     INT0_vect_interrupt:
+    388          {
+   \   00000000   930A               ST      -Y, R16
+    389            GICR  = 0; // Запретим прерывания, чтобы они вновь не возникали в случае если кнопку не отпустили
+   \   00000002   E000               LDI     R16, 0
+   \   00000004   BF0B               OUT     0x3B, R16
+    390            fbut1 = 1;
+   \   00000006   E001               LDI     R16, 1
+   \   00000008   9300....           STS     fbut1, R16
+    391          }
+   \   0000000C                      REQUIRE ?Subroutine2
+   \   0000000C                      REQUIRE _A_GICR
+   \   0000000C                      ;               // Fall through to label ?Subroutine2
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine2:
+   \   00000000   9109               LD      R16, Y+
+   \   00000002   9518               RETI
+    392          
+    393          
+    394          #pragma vector=INT1_vect
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    395          __interrupt void INT1_vect_interrupt( void )
+   \                     INT1_vect_interrupt:
+    396          {
+   \   00000000   930A               ST      -Y, R16
+    397            GICR  = 0; // Запретим прерывания, чтобы они вновь не возникали в случае если кнопку не отпустили
+   \   00000002   E000               LDI     R16, 0
+   \   00000004   BF0B               OUT     0x3B, R16
+    398            fbut2 = 1;
+   \   00000006   E001               LDI     R16, 1
+   \   00000008   9300....           STS     fbut2, R16
+    399          }
+   \   0000000C   ....               RJMP    ?Subroutine2
+   \   0000000E                      REQUIRE _A_GICR
+
+   \                                 In  segment INTVEC, offset 0x2, root
+   \                     `??INT0_vect_interrupt::??INTVEC 2`:
+   \   00000002   ....               RJMP    INT0_vect_interrupt
+
+   \                                 In  segment INTVEC, offset 0x4, root
+   \                     `??INT1_vect_interrupt::??INTVEC 4`:
+   \   00000004   ....               RJMP    INT1_vect_interrupt
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "CRC error!\\n\\r">>`:
+   \   00000000   524320437265       DC8 "CRC error!\012\015"
+   \              6F7221720D0A
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "Ver. error!\\n\\r">`:
+   \   00000000   65562E726520       DC8 "Ver. error!\012\015"
+   \              7272726F0A21
+   \              000D        
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "EEPROM Ok!\\n\\r">>`:
+   \   00000000   454552504D4F       DC8 "EEPROM Ok!\012\015"
+   \              4F20216B0D0A
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "Settings restored`:
+   \   00000000   655374746E69       DC8 "Settings restored!\012\015"
+   \              736772207365
+   \              6F7465722164
+   \              0D0A00      
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "CRC error!\\n\\r">`:
+   \   00000000                      DS8 13
+   \   0000000D                      REQUIRE `?<Initializer for <Constant "CRC error!\\n\\r">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "Ver. error!\\n\\r">`:
+   \   00000000                      DS8 14
+   \   0000000E                      REQUIRE `?<Initializer for <Constant "Ver. error!\\n\\r">`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "EEPROM Ok!\\n\\r">`:
+   \   00000000                      DS8 13
+   \   0000000D                      REQUIRE `?<Initializer for <Constant "EEPROM Ok!\\n\\r">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "Settings restored!\\n\\r">`:
+   \   00000000                      DS8 21
+   \   00000015                      REQUIRE `?<Initializer for <Constant "Settings restored`
+
+   Maximum stack usage in bytes:
+
+   CSTACK RSTACK Function
+   ------ ------ --------
+      1      2   INT0_vect_interrupt
+      1      2   INT1_vect_interrupt
+      0      2   get_pack_first_byte
+      0      2   heart_beat_msg
+        0      2   -> USART_Transmit
+        0      2   -> hex_to_ascii
+        0      2 ?UL_SHR_L03
+        0      2 ?US_SHR_L02
+      4      2   main
+        4      2   -> D1W_Init
+        4      2   -> DS1W_FindFamily
+        4      2   -> DS1W_SearchBuses
+        4      2   -> DataInReceiveBuffer
+        4      2   -> Restore_default_settings
+        4      2   -> Restore_settings_from_eeprom
+        4      2   -> USART_Init
+        4      2   -> USART_close
+        4      2   -> USART_sendstr
+        4      2   -> heart_beat_msg
+        4      2   -> rand_gen_byte
+        4      2   -> send_ADC_results
+        4      2   -> send_buttons
+        4      2   -> send_temperatures
+        4      2   -> terminal
+      2      2   prepare_temper_pack
+        2      2   -> DS1820_ReadTemperature
+        2      2   -> get_pack_first_byte
+      0      2   rand_gen_byte
+        0      2 ?L_EC_MUL_L03
+      4      2   send_ADC_results
+        4      2   -> ADC_get_select_ch
+        4      2   -> ADC_init
+        4      2   -> ADC_switch_off
+        4      2   -> get_pack_first_byte
+        4      2   -> send_packet
+      4      2   send_buttons
+        4      2   -> get_pack_first_byte
+        4      2   -> send_packet
+      0      2   send_packet
+        0      2   -> RF_send
+      2      2   send_temperatures
+        2      2   -> DS1W_SearchBuses
+        2      2   -> prepare_temper_pack
+        2      2   -> send_packet
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      13  ?<Constant "CRC error!\n\r">
+      13  ?<Constant "EEPROM Ok!\n\r">
+      21  ?<Constant "Settings restored!\n\r">
+      14  ?<Constant "Ver. error!\n\r">
+      13  ?<Initializer for <Constant "CRC error!\n\r">>
+      13  ?<Initializer for <Constant "EEPROM Ok!\n\r">>
+      21  ?<Initializer for <Constant "Settings restored
+      14  ?<Initializer for <Constant "Ver. error!\n\r">
+       4  ?Subroutine0
+       4  ?Subroutine1
+       4  ?Subroutine2
+      12  INT0_vect_interrupt
+       2  INT0_vect_interrupt::??INTVEC 2
+      14  INT1_vect_interrupt
+       2  INT1_vect_interrupt::??INTVEC 4
+       1  _A_DDRB
+       1  _A_DDRC
+       1  _A_DDRD
+       1  _A_GICR
+       1  _A_GIFR
+       1  _A_MCUCR
+       1  _A_MCUCSR
+       1  _A_PIND
+       1  _A_PORTB
+       1  _A_PORTC
+       1  _A_PORTD
+       1  _A_WDTCR
+      32  devices
+       1  fbut1
+       1  fbut2
+       1  flags
+       1  fswon
+      36  get_pack_first_byte
+     138  heart_beat_msg
+     418  main
+       4  pack_cnt
+      70  prepare_temper_pack
+      40  rand_gen_byte
+      20  rf_packet
+       4  seed
+     136  send_ADC_results
+      72  send_buttons
+      22  send_packet
+      50  send_temperatures
+       1  wdt_div
+       1  wdtpresc
+      12  -- Other
+
+ 
+    12 bytes in segment ABSOLUTE
+ 1 020 bytes in segment CODE
+    12 bytes in segment INITTAB
+     4 bytes in segment INTVEC
+    61 bytes in segment NEAR_I
+    61 bytes in segment NEAR_ID
+    42 bytes in segment NEAR_N
+    24 bytes in segment NEAR_Z
+ 
+ 1 081 bytes of CODE memory (+ 16 bytes shared)
+   127 bytes of DATA memory (+ 12 bytes shared)
+
+Errors: none
+Warnings: none

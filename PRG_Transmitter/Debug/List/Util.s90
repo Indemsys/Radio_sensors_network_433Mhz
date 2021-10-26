@@ -1,0 +1,1234 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR      26/Oct/2021  17:01:08
+// Copyright 1996-2021 IAR Systems AB.
+//
+//    Source file  =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Util.c
+//    Command line =  
+//        -f C:\Users\aly\AppData\Local\Temp\EW92E2.tmp
+//        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Util.c
+//        --cpu=m8 -ms -o
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj
+//        -lCN
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+//        -lB
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+//        --initializers_in_flash --no_cross_call --no_clustering --no_tbaa
+//        --debug -DENABLE_BIT_DEFINITIONS -e --eeprom_size 512 --clib -Ohz)
+//    Locale       =  Russian_RUS.1251
+//    List file    =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List\Util.s90
+//
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME Util
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B16_L09
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?EPILOGUE_B6_L09
+        EXTERN ?EPILOGUE_B7_L09
+        EXTERN ?F2SL_L04
+        EXTERN ?F_CMP_GE_L04
+        EXTERN ?F_CMP_LT_L04
+        EXTERN ?F_DIV_L04
+        EXTERN ?F_MUL_L04
+        EXTERN ?F_SUB_L04
+        EXTERN ?L_EC_MUL_L03
+        EXTERN ?PROLOGUE16_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?PROLOGUE6_L09
+        EXTERN ?PROLOGUE7_L09
+        EXTERN ?Register_R10_is_cg_reg
+        EXTERN ?Register_R11_is_cg_reg
+        EXTERN ?Register_R12_is_cg_reg
+        EXTERN ?Register_R13_is_cg_reg
+        EXTERN ?Register_R14_is_cg_reg
+        EXTERN ?Register_R15_is_cg_reg
+        EXTERN ?Register_R4_is_cg_reg
+        EXTERN ?Register_R5_is_cg_reg
+        EXTERN ?Register_R6_is_cg_reg
+        EXTERN ?Register_R7_is_cg_reg
+        EXTERN ?Register_R8_is_cg_reg
+        EXTERN ?Register_R9_is_cg_reg
+        EXTERN ?SL2F_L04
+        EXTERN ?SS_DIVMOD_L02
+
+        PUBLIC GetBlockCRC
+        PUBLIC GetCRC
+        PUBLIC Num_to_str
+        PUBLIC Right_align_str
+        PUBLIC Str_to_num
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC ascii_to_hex
+        PUBLIC float_conversion
+        PUBLIC hex_to_ascii
+        PUBLIC is_hex_digit
+        PUBLIC write_ascii
+
+        EXTERN ldiv
+
+// D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Util.c
+//    1 #include  "main.h"
+//    2 #include  <stdlib.h>
+//    3 
+//    4 // ==========================================================
+//    5 //  Проверка соответствия символа шестнадцатеричному представлению
+//    6 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//    7 unsigned char is_hex_digit(unsigned char c)
+is_hex_digit:
+        CODE
+//    8 {
+//    9     if ((c >= '0' && c <= '9') ||
+//   10         (c >= 'a' && c <= 'f') ||
+//   11         (c >= 'A' && c <= 'F')) return (1);
+        MOV     R17, R16
+        SUBI    R17, 48
+        CPI     R17, 10
+        BRCS    ??is_hex_digit_0
+        MOV     R17, R16
+        SUBI    R17, 97
+        CPI     R17, 6
+        BRCS    ??is_hex_digit_0
+        SUBI    R16, 65
+        CPI     R16, 6
+        BRCC    ??is_hex_digit_1
+??is_hex_digit_0:
+        LDI     R16, 1
+        RET
+//   12     return (0);
+??is_hex_digit_1:
+        LDI     R16, 0
+        RET
+//   13 } 
+//   14 
+//   15 // ==========================================================
+//   16 //  Преобразование символа в шестнадцатеричное представление
+//   17 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   18 unsigned char ascii_to_hex(unsigned char c)
+ascii_to_hex:
+        CODE
+//   19 {
+//   20     if (c >= '0' && c <= '9')      return ( c - '0' ) & 0x0f;
+        MOV     R17, R16
+        SUBI    R17, 48
+        CPI     R17, 10
+        BRCS    ??ascii_to_hex_0
+//   21     else if (c >= 'a' && c <= 'f') return ( c - 'a' + 10 ) & 0x0f;
+        MOV     R17, R16
+        SUBI    R17, 97
+        CPI     R17, 6
+        BRCC    ??ascii_to_hex_1
+        SUBI    R16, 87
+??ascii_to_hex_0:
+        ANDI    R16, 0x0F
+        RET
+//   22     else                           return ( c - 'A' + 10 ) & 0x0f;
+??ascii_to_hex_1:
+        SUBI    R16, 55
+        RJMP    ??ascii_to_hex_0
+//   23 } 
+//   24 
+//   25 // ==========================================================
+//   26 //  Преобразование байта в ASCII 
+//   27 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   28 unsigned char hex_to_ascii(unsigned char c)
+hex_to_ascii:
+        CODE
+//   29 {
+//   30     c = c & 0xf;
+        ANDI    R16, 0x0F
+//   31     if (c <= 9) return (c + 0x30);
+        CPI     R16, 10
+        BRCC    ??hex_to_ascii_0
+        SUBI    R16, 208
+        RET
+//   32     return (c + 'A' - 10);
+??hex_to_ascii_0:
+        SUBI    R16, 201
+        RET
+//   33 } 
+//   34 
+//   35 // ==========================================================
+//   36 //  Преобразовать не символьные байты в точку
+//   37 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   38 unsigned char write_ascii(unsigned char c)
+write_ascii:
+        CODE
+//   39 {
+//   40     if (c >= 0x20) return (c);
+        CPI     R16, 32
+        BRCC    ??write_ascii_0
+//   41     return ('.');
+        LDI     R16, 46
+??write_ascii_0:
+        RET
+//   42 } 
+//   43 
+//   44 
+//   45 
+//   46 
+//   47 // ==========================================================
+//   48 //  Расчет контрольной суммы по стандарту CRC CCITT 
+//   49 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   50 unsigned int GetCRC(unsigned int CRC,unsigned char b)
+GetCRC:
+        CODE
+//   51 {
+//   52 #define POLI 0x1021 // CRC-16/CITT
+//   53   unsigned char i;
+//   54   CRC=CRC ^ (b << 8);
+        EOR     R17, R18
+//   55   for (i=0;i<8;i++)
+        LDI     R18, 8
+//   56   {
+//   57     if ((CRC & 0x8000) != 0) 
+??GetCRC_0:
+        MOVW    R21:R20, R17:R16
+        LSL     R20
+        ROL     R21
+        BST     R17, 7
+        MOVW    R17:R16, R21:R20
+        BRTC    ??GetCRC_1
+//   58     {
+//   59       CRC=(CRC << 1) ^ POLI; 
+        LDI     R19, 33
+        EOR     R16, R19
+        LDI     R19, 16
+        EOR     R17, R19
+//   60     }
+//   61     else
+//   62     {
+//   63       CRC=(CRC << 1);
+//   64     }   
+//   65   } 
+??GetCRC_1:
+        DEC     R18
+        BRNE    ??GetCRC_0
+//   66   return CRC;
+        RET
+//   67 }
+//   68 
+//   69 // ==========================================================
+//   70 //  Расчет контрольной суммы блока данных
+//   71 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   72 unsigned int GetBlockCRC(unsigned char* b,long len)
+GetBlockCRC:
+        CODE
+//   73 {
+        RCALL   ?PROLOGUE6_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        REQUIRE ?Register_R5_is_cg_reg
+        MOVW    R5:R4, R17:R16
+        MOVW    R1:R0, R21:R20
+//   74   long i;
+//   75   unsigned int CRC=0xFFFF;
+        LDI     R16, 255
+        LDI     R17, 255
+//   76   
+//   77   for (i=0;i<len;i++)
+        LDI     R24, 0
+        LDI     R25, 0
+        LDI     R26, 0
+        LDI     R27, 0
+        RJMP    ??GetBlockCRC_0
+//   78   {
+//   79      CRC=GetCRC(CRC, *(b+i)); 
+??GetBlockCRC_1:
+        MOVW    R31:R30, R5:R4
+        ADD     R30, R24
+        ADC     R31, R25
+        LD      R18, Z
+        RCALL   GetCRC
+//   80   }
+        SUBI    R24, 255
+        SBCI    R25, 255
+        SBCI    R26, 255
+        SBCI    R27, 255
+??GetBlockCRC_0:
+        CP      R24, R0
+        CPC     R25, R1
+        CPC     R26, R22
+        CPC     R27, R23
+        BRLT    ??GetBlockCRC_1
+//   81   return CRC;
+        LDI     R30, 6
+        RJMP    ?EPILOGUE_B6_L09
+//   82 }
+//   83 
+//   84 
+//   85 // ==========================================================
+//   86 //  Перевод беззнакового целого числа (unsigned long) в строку
+//   87 //  buf   - указатель на буфер приемник строки
+//   88 //  ln    - максимальная длина строки
+//   89 //  ul    - преобразуемое число
+//   90 //  base  - база исчисления: 10 - десятичная, 16 - шестнадцатеричная, 2 - двоичная и т.д.  
+//   91 //  Возвращает количество символов в строке 
+//   92 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   93 int Num_to_str(unsigned char *buf,int ln,unsigned long ul,unsigned char base)
+Num_to_str:
+        CODE
+//   94 {
+        RCALL   ?PROLOGUE7_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        REQUIRE ?Register_R5_is_cg_reg
+        REQUIRE ?Register_R6_is_cg_reg
+        SBIW    R29:R28, 8
+        MOVW    R5:R4, R17:R16
+        MOVW    R27:R26, R19:R18
+//   95   int    n;          // Счетчик позиции в буфере    
+//   96   ldiv_t res;        // Результат целочисленного деления
+//   97   unsigned char b;
+//   98   int i;
+//   99   
+//  100   n=0;
+        LDI     R24, 0
+        LDI     R25, 0
+        LDD     R6, Y+15
+        RJMP    ??Num_to_str_0
+//  101   for (;;)                            
+//  102   {                                   
+//  103     res=ldiv(ul,base);                 
+//  104     *(buf+n)=hex_to_ascii(res.rem);       
+//  105     n++;                              
+//  106     if (ln!=0) 
+//  107     {                       
+//  108       if (n>=ln) break;             
+??Num_to_str_1:
+        CP      R24, R26
+        CPC     R25, R27
+        BRGE    ??Num_to_str_2
+//  109     }  
+//  110     else                    
+//  111     {          
+//  112       if (res.quot==0) break;         
+//  113     }  
+//  114     ul=res.quot;                      
+??Num_to_str_3:
+        LD      R20, Y
+        LDD     R21, Y+1
+        LDD     R22, Y+2
+        LDD     R23, Y+3
+??Num_to_str_0:
+        LDI     R17, 0
+        ST      -Y, R17
+        ST      -Y, R17
+        ST      -Y, R17
+        ST      -Y, R6
+        MOVW    R17:R16, R29:R28
+        SUBI    R16, 252
+        SBCI    R17, 255
+        RCALL   ldiv
+        LDD     R16, Y+4
+        RCALL   hex_to_ascii
+        MOVW    R31:R30, R5:R4
+        ADD     R30, R24
+        ADC     R31, R25
+        ST      Z, R16
+        ADIW    R25:R24, 1
+        MOV     R16, R26
+        OR      R16, R27
+        BRNE    ??Num_to_str_1
+        LD      R16, Y
+        LDD     R17, Y+1
+        LDD     R18, Y+2
+        LDD     R19, Y+3
+        OR      R16, R17
+        OR      R16, R18
+        OR      R16, R19
+        BRNE    ??Num_to_str_3
+//  115   }              
+//  116 
+//  117   // Переписать буфер в обратной последовательности
+//  118   for (i=0;i<(n / 2);i++)
+??Num_to_str_2:
+        LDI     R26, 0
+        LDI     R27, 0
+        MOVW    R19:R18, R5:R4
+        ADD     R18, R24
+        ADC     R19, R25
+        RJMP    ??Num_to_str_4
+//  119   {
+//  120     b=*(buf+i);
+??Num_to_str_5:
+        MOVW    R21:R20, R5:R4
+        ADD     R20, R26
+        ADC     R21, R27
+        MOVW    R31:R30, R21:R20
+        LD      R0, Z
+//  121     *(buf+i)=*(buf+n-i-1);
+        MOVW    R23:R22, R27:R26
+        NEG     R23
+        NEG     R22
+        SBCI    R23, 0
+        MOVW    R17:R16, R19:R18
+        ADD     R16, R22
+        ADC     R17, R23
+        SUBI    R16, 1
+        SBCI    R17, 0
+        MOVW    R31:R30, R17:R16
+        LD      R22, Z
+        MOVW    R31:R30, R21:R20
+        ST      Z, R22
+//  122     *(buf+n-i-1)=b; 
+        MOVW    R31:R30, R17:R16
+        ST      Z, R0
+//  123   }
+        ADIW    R27:R26, 1
+??Num_to_str_4:
+        LDI     R20, 2
+        LDI     R21, 0
+        MOVW    R17:R16, R25:R24
+        RCALL   ?SS_DIVMOD_L02
+        CP      R26, R16
+        CPC     R27, R17
+        BRLT    ??Num_to_str_5
+//  124     
+//  125   *(buf+n)=0; // Закончить строку нулем 
+        MOVW    R31:R30, R19:R18
+        LDI     R16, 0
+        ST      Z, R16
+//  126   return n;
+        MOVW    R17:R16, R25:R24
+        ADIW    R29:R28, 8
+        LDI     R30, 8
+        RJMP    ?EPILOGUE_B7_L09
+//  127 }   
+//  128 
+//  129 // ==========================================================
+//  130 //  Преобразует строку в беззнаковое целое число 
+//  131 //  *buf - указатель на буфер в котором находиться строка
+//  132 //  base - база исчисления: 10 - десятичная, 16 - шестнадцатеричная, 2 - двоичная и т.д.  
+//  133 //  Возвращает  число
+//  134 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  135 unsigned long Str_to_num(unsigned char *buf, unsigned char base)
+Str_to_num:
+        CODE
+//  136 {
+        MOVW    R31:R30, R17:R16
+        MOV     R3, R18
+//  137   unsigned long b=0;  
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 0
+        LDI     R23, 0
+        RJMP    ??Str_to_num_0
+//  138   while (*buf!=0)
+//  139   {
+//  140     b=b*base + ascii_to_hex(*buf);
+??Str_to_num_1:
+        MOV     R16, R3
+        LDI     R17, 0
+        LDI     R18, 0
+        LDI     R19, 0
+        RCALL   ?L_EC_MUL_L03
+        MOVW    R21:R20, R17:R16
+        MOVW    R23:R22, R19:R18
+        LD      R16, Z+
+        RCALL   ascii_to_hex
+        LDI     R17, 0
+        ADD     R20, R16
+        ADC     R21, R17
+        ADC     R22, R17
+        ADC     R23, R17
+//  141     buf++;
+//  142   }   
+??Str_to_num_0:
+        LD      R16, Z
+        TST     R16
+        BRNE    ??Str_to_num_1
+//  143   return b; 
+        MOVW    R17:R16, R21:R20
+        MOVW    R19:R18, R23:R22
+        RET
+//  144   
+//  145 } 
+//  146 /* ========================================================
+//  147    Выравнивание строки вправо
+//  148    ========================================================*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  149 void Right_align_str(unsigned char *buf, int buf_len)
+Right_align_str:
+        CODE
+//  150 {
+        RCALL   ?PROLOGUE4_L09
+        MOVW    R21:R20, R17:R16
+        MOVW    R23:R22, R19:R18
+//  151   int l=0;
+        LDI     R24, 0
+        LDI     R25, 0
+        RJMP    ??Right_align_str_0
+//  152   int i;
+//  153   while (*(buf+l)!=0) l++; // Найдем длину строки в буфере
+??Right_align_str_1:
+        ADIW    R25:R24, 1
+??Right_align_str_0:
+        MOVW    R17:R16, R21:R20
+        ADD     R16, R24
+        ADC     R17, R25
+        MOVW    R31:R30, R17:R16
+        LD      R18, Z
+        TST     R18
+        BRNE    ??Right_align_str_1
+//  154   if (l<buf_len)
+        CP      R24, R22
+        CPC     R25, R23
+        BRGE    ??Right_align_str_2
+//  155   {
+//  156     for (i=0;i<l;i++) 
+        LDI     R18, 0
+        LDI     R19, 0
+        ADD     R20, R22
+        ADC     R21, R23
+        RJMP    ??Right_align_str_3
+//  157     {
+//  158       *(buf+buf_len-1-i)=*(buf+l-1-i);
+??Right_align_str_4:
+        MOVW    R23:R22, R19:R18
+        NEG     R23
+        NEG     R22
+        SBCI    R23, 0
+        MOVW    R31:R30, R17:R16
+        ADD     R30, R22
+        ADC     R31, R23
+        LD      R0, -Z
+        MOVW    R27:R26, R21:R20
+        ADD     R26, R22
+        ADC     R27, R23
+        ST      -X, R0
+//  159       *(buf+l-1-i)=' ';
+        LDI     R22, 32
+        ST      Z, R22
+//  160     }
+        SUBI    R18, 255
+        SBCI    R19, 255
+??Right_align_str_3:
+        CP      R18, R24
+        CPC     R19, R25
+        BRLT    ??Right_align_str_4
+//  161     *(buf+buf_len)=0; 
+        MOVW    R31:R30, R21:R20
+        LDI     R16, 0
+        ST      Z, R16
+//  162   } 
+//  163 } 
+??Right_align_str_2:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+//  164 
+//  165 // ==========================================================
+//  166 //  Преобразование числа в строковое представление. Возвращает указатель на конец занятого буфера 
+//  167 // ==========================================================
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  168 unsigned char *float_conversion(float value,   // Преобразуемая величина
+float_conversion:
+        CODE
+//  169                               short nr_of_digits,    // Общее количество цифр для представления числа 
+//  170                                                      // Если число меньше 1, то не считая предварительных нулей 
+//  171                               unsigned char *buf,     
+//  172                               unsigned char format_flag,    // 'E' или 'e'
+//  173                               unsigned char g_flag,         // 1 - представлять в формате с фиксированной точкой
+//  174                               unsigned char alternate_flag) // 1 - не убирать не значащие нули
+//  175 {
+        RCALL   ?PROLOGUE16_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        REQUIRE ?Register_R5_is_cg_reg
+        REQUIRE ?Register_R6_is_cg_reg
+        REQUIRE ?Register_R7_is_cg_reg
+        REQUIRE ?Register_R8_is_cg_reg
+        REQUIRE ?Register_R9_is_cg_reg
+        REQUIRE ?Register_R10_is_cg_reg
+        REQUIRE ?Register_R11_is_cg_reg
+        REQUIRE ?Register_R12_is_cg_reg
+        REQUIRE ?Register_R13_is_cg_reg
+        REQUIRE ?Register_R14_is_cg_reg
+        REQUIRE ?Register_R15_is_cg_reg
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+        MOVW    R15:R14, R21:R20
+        MOVW    R11:R10, R23:R22
+//  176   unsigned char *cp, *buf_pointer;
+//  177   short n, i, dec_point_pos, integral_10_log;
+//  178 
+//  179   buf_pointer = buf;
+        MOVW    R13:R12, R23:R22
+//  180   integral_10_log = 0;
+        CLR     R8
+        CLR     R9
+//  181   // Показать знак числа
+//  182   if (value<0)
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 0
+        LDI     R23, 0
+        RCALL   ?F_CMP_LT_L04
+        BRCC    ??float_conversion_0
+//  183   {
+//  184     value=-value;
+        SUBI    R27, 128
+//  185     *buf_pointer++ = '-';
+        MOVW    R31:R30, R13:R12
+        LDI     R16, 45
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  186   } 
+//  187   
+//  188   if (value >= 1)
+??float_conversion_0:
+        MOV     R16, R24
+        MOV     R19, R27
+        LDI     R22, 128
+        LDI     R23, 63
+        RCALL   ?F_CMP_GE_L04
+        BRCS    ??float_conversion_1
+//  189   {
+//  190     // Вычисляем количество десятков в экспоненте
+//  191     while (value >= 1e11)        
+//  192     {
+//  193       value /= 1e10;
+//  194       integral_10_log += 10;
+//  195     }
+//  196     // Вычисляем количество единиц в экспоненте
+//  197     while (value >= 10)
+//  198     {
+//  199       value /= 10;
+//  200       integral_10_log++;
+//  201     }
+//  202   }
+//  203   else if (value)            
+        MOV     R16, R27
+        LSL     R16
+        OR      R16, R24
+        OR      R16, R25
+        OR      R16, R26
+        BREQ    $+2+2
+        RJMP    ??float_conversion_2
+//  204   {
+//  205     // Вычисляем количество десятков в знаменателе экспоненты
+//  206     while (value <= 1e-10)        
+//  207     {
+//  208       value *= 1e10;
+//  209       integral_10_log -= 10;
+//  210     }
+//  211     // Вычисляем количество единиц в знаменателе экспоненты
+//  212     while (value < 1)
+//  213     {
+//  214       value *= 10;
+//  215       integral_10_log--;
+//  216     }
+//  217   }
+//  218   
+//  219   if (g_flag)
+??float_conversion_3:
+        LDD     R16, Y+17
+        TST     R16
+        BRNE    $+2+2
+        RJMP    ??float_conversion_4
+//  220   {
+//  221     if (integral_10_log < nr_of_digits && integral_10_log >= -4)
+        CP      R8, R14
+        CPC     R9, R15
+        BRGE    ??float_conversion_5
+        LDI     R16, 252
+        CP      R8, R16
+        LDI     R16, 255
+        CPC     R9, R16
+        BRLT    ??float_conversion_5
+//  222     {
+//  223       format_flag = 0;
+        LDI     R16, 0
+        STD     Y+16, R16
+//  224       nr_of_digits = nr_of_digits - integral_10_log;
+        SUB     R14, R8
+        SBC     R15, R9
+//  225     }
+//  226     nr_of_digits--;
+??float_conversion_5:
+        LDI     R16, 255
+        ADD     R14, R16
+        ADC     R15, R16
+//  227     if (alternate_flag)
+        LDD     R16, Y+18
+        TST     R16
+        BRNE    $+2+2
+        RJMP    ??float_conversion_6
+//  228     {
+//  229       g_flag = 0;         /* %#G - No removal of trailing zeros */
+        LDI     R16, 0
+        STD     Y+17, R16
+        RJMP    ??float_conversion_4
+//  230     }
+??float_conversion_7:
+        LDI     R20, 249
+        LDI     R21, 2
+        LDI     R22, 21
+        LDI     R23, 80
+        RCALL   ?F_DIV_L04
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+        LDI     R16, 10
+        ADD     R8, R16
+        LDI     R16, 0
+        ADC     R9, R16
+??float_conversion_1:
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        LDI     R20, 183
+        LDI     R21, 67
+        LDI     R22, 186
+        LDI     R23, 81
+        RCALL   ?F_CMP_GE_L04
+        BRCS    ??float_conversion_7
+??float_conversion_8:
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 32
+        LDI     R23, 65
+        RCALL   ?F_CMP_GE_L04
+        BRCC    ??float_conversion_3
+        RCALL   ?F_DIV_L04
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+        LDI     R16, 1
+        ADD     R8, R16
+        LDI     R16, 0
+        ADC     R9, R16
+        RJMP    ??float_conversion_8
+??float_conversion_9:
+        LDI     R20, 249
+        LDI     R21, 2
+        LDI     R22, 21
+        LDI     R23, 80
+        RCALL   ?F_MUL_L04
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+        LDI     R16, 246
+        ADD     R8, R16
+        LDI     R16, 255
+        ADC     R9, R16
+??float_conversion_2:
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        LDI     R20, 0
+        LDI     R21, 231
+        LDI     R22, 219
+        LDI     R23, 46
+        RCALL   ?F_CMP_LT_L04
+        BRCS    ??float_conversion_9
+??float_conversion_10:
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 128
+        LDI     R23, 63
+        RCALL   ?F_CMP_LT_L04
+        BRCS    $+2+2
+        RJMP    ??float_conversion_3
+        LDI     R22, 32
+        LDI     R23, 65
+        RCALL   ?F_MUL_L04
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+        LDI     R16, 255
+        ADD     R8, R16
+        ADC     R9, R16
+        RJMP    ??float_conversion_10
+//  231     else
+//  232     {
+//  233       alternate_flag = 1;  /* %G - Removal of trailing zeros */
+??float_conversion_6:
+        LDI     R16, 1
+        STD     Y+18, R16
+//  234     }
+//  235   }
+//  236   
+//  237   if (format_flag)        /* %e or %E */
+??float_conversion_4:
+        LDD     R16, Y+16
+        TST     R16
+        BREQ    ??float_conversion_11
+//  238   {
+//  239     // Для представления с экспонентой
+//  240     dec_point_pos = 0;
+        CLR     R6
+        CLR     R7
+        RJMP    ??float_conversion_12
+//  241   }
+//  242   else
+//  243   {
+//  244     if (integral_10_log < 0)       
+??float_conversion_11:
+        TST     R9
+        BRPL    ??float_conversion_13
+//  245     {
+//  246       // Для чисел меньших по абсолютному значению чем 1 в представлении без экспоненты
+//  247       *buf_pointer++ = '0';
+        MOVW    R31:R30, R13:R12
+        LDI     R16, 48
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  248       if ((n = nr_of_digits) || alternate_flag)
+        MOVW    R5:R4, R15:R14
+        MOV     R16, R14
+        OR      R16, R5
+        BRNE    ??float_conversion_14
+        LDD     R16, Y+18
+        TST     R16
+        BREQ    ??float_conversion_15
+//  249       {
+//  250         *buf_pointer++ = '.';
+??float_conversion_14:
+        LDI     R16, 46
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  251       }
+//  252       i = 0;
+??float_conversion_15:
+        CLR     R6
+        CLR     R7
+        RJMP    ??float_conversion_16
+//  253       while (--i > integral_10_log && nr_of_digits)
+//  254       {
+//  255         *buf_pointer++ = '0';
+??float_conversion_17:
+        MOVW    R31:R30, R13:R12
+        LDI     R16, 48
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  256         nr_of_digits--;
+        LDI     R16, 255
+        ADD     R14, R16
+        ADC     R15, R16
+//  257       }
+??float_conversion_16:
+        LDI     R16, 255
+        ADD     R6, R16
+        ADC     R7, R16
+        CP      R8, R6
+        CPC     R9, R7
+        BRGE    ??float_conversion_18
+        MOV     R16, R14
+        OR      R16, R15
+        BRNE    ??float_conversion_17
+//  258       if (integral_10_log < (-n - 1))
+??float_conversion_18:
+        COM     R4
+        COM     R5
+        CP      R8, R4
+        CPC     R9, R5
+        BRGE    $+2+2
+        RJMP    ??float_conversion_19
+//  259       {
+//  260         goto CLEAN_UP;     /* Nothing more to do */
+//  261       }
+//  262       dec_point_pos = 1;
+        CLR     R7
+        CLR     R6
+        INC     R6
+        RJMP    ??float_conversion_12
+//  263     }
+//  264     else
+//  265     {
+//  266       // Для чисел больших по абсолютному значению чем 1 в представлении без экспоненты
+//  267       dec_point_pos = - integral_10_log;
+??float_conversion_13:
+        MOVW    R7:R6, R9:R8
+        NEG     R7
+        NEG     R6
+        LDI     R16, 0
+        SBC     R7, R16
+        RJMP    ??float_conversion_12
+//  268     }
+//  269   }
+//  270 
+//  271   i = dec_point_pos;
+//  272   while (i <= nr_of_digits )
+//  273   {
+//  274     n = (short)value;
+??float_conversion_20:
+        RCALL   ?F2SL_L04
+        MOV     R4, R16
+//  275     value = value - n;          /* n=Digit value=Remainder */
+//  276     value = value * 10;         /* Prepare for next shot */
+        MOV     R18, R17
+        LSL     R18
+        SBC     R18, R18
+        MOV     R19, R18
+        RCALL   ?SL2F_L04
+        MOVW    R21:R20, R17:R16
+        MOVW    R23:R22, R19:R18
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        RCALL   ?F_SUB_L04
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 32
+        LDI     R23, 65
+        RCALL   ?F_MUL_L04
+        MOVW    R25:R24, R17:R16
+        MOVW    R27:R26, R19:R18
+//  277     *buf_pointer++ = n + '0';
+        MOV     R16, R4
+        SUBI    R16, 208
+        MOVW    R31:R30, R13:R12
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  278     if ( ! i++ && (nr_of_digits || alternate_flag))
+        MOVW    R19:R18, R7:R6
+        LDI     R16, 1
+        ADD     R6, R16
+        LDI     R16, 0
+        ADC     R7, R16
+        OR      R18, R19
+        BRNE    ??float_conversion_12
+        MOV     R16, R14
+        OR      R16, R15
+        BRNE    ??float_conversion_21
+        LDD     R16, Y+18
+        TST     R16
+        BREQ    ??float_conversion_12
+//  279     {
+//  280       *buf_pointer++ = '.';
+??float_conversion_21:
+        LDI     R16, 46
+        ST      Z+, R16
+        MOVW    R13:R12, R31:R30
+//  281     }
+//  282   } // while
+??float_conversion_12:
+        CP      R14, R6
+        CPC     R15, R7
+        MOVW    R17:R16, R25:R24
+        MOVW    R19:R18, R27:R26
+        BRGE    ??float_conversion_20
+//  283   
+//  284   if (value >= 5)    /* Rounding possible */
+        LDI     R20, 0
+        LDI     R21, 0
+        LDI     R22, 160
+        LDI     R23, 64
+        RCALL   ?F_CMP_GE_L04
+        BRCC    ??float_conversion_19
+//  285   {
+//  286     n = 1;    /* Carry */
+        CLR     R4
+        INC     R4
+//  287     cp = buf_pointer - 1;
+        MOVW    R25:R24, R13:R12
+        SBIW    R25:R24, 1
+//  288     do
+//  289     {
+//  290       if (*cp != '.')
+??float_conversion_22:
+        MOVW    R31:R30, R25:R24
+        LD      R16, Z
+        CPI     R16, 46
+        BREQ    ??float_conversion_23
+//  291         if ( (*cp += n) == ('9' + 1) )
+        ADD     R16, R4
+        ST      Z, R16
+        CPI     R16, 58
+        BRNE    ??float_conversion_24
+//  292         {
+//  293           *cp = '0';
+        LDI     R16, 48
+        ST      Z, R16
+//  294           n = 1;
+        CLR     R4
+        INC     R4
+        RJMP    ??float_conversion_23
+//  295         }
+//  296         else
+//  297         {
+//  298           n = 0;
+??float_conversion_24:
+        CLR     R4
+//  299         }
+//  300     } while (cp-- > buf);
+??float_conversion_23:
+        SBIW    R25:R24, 1
+        CP      R10, R30
+        CPC     R11, R31
+        BRCS    ??float_conversion_22
+//  301     if (n)
+        BST     R4, 0
+        BRTC    ??float_conversion_19
+//  302     {
+//  303       if (format_flag)        /* %e or %E */
+        LDD     R16, Y+16
+        TST     R16
+        BREQ    ??float_conversion_25
+//  304       {
+//  305         cp = buf_pointer;
+        MOVW    R25:R24, R13:R12
+        RJMP    ??float_conversion_26
+//  306         while (cp > buf)
+//  307         {
+//  308           if (*(cp - 1) == '.')
+//  309           {
+//  310             *cp = *(cp - 2);
+//  311             cp--;
+//  312           }
+//  313           else
+//  314           {
+//  315             *cp = *(cp - 1);
+??float_conversion_27:
+        STD     Z+1, R16
+//  316           }
+//  317           cp--;
+??float_conversion_28:
+        SBIW    R25:R24, 1
+??float_conversion_26:
+        CP      R10, R24
+        CPC     R11, R25
+        BRCC    ??float_conversion_29
+        MOVW    R31:R30, R25:R24
+        LD      R16, -Z
+        CPI     R16, 46
+        BRNE    ??float_conversion_27
+        MOVW    R31:R30, R25:R24
+        SBIW    R31:R30, 2
+        LD      R16, Z
+        STD     Z+2, R16
+        SBIW    R25:R24, 1
+        RJMP    ??float_conversion_28
+//  318         }
+//  319         integral_10_log++;
+??float_conversion_29:
+        LDI     R16, 1
+        ADD     R8, R16
+        ADC     R9, R20
+        RJMP    ??float_conversion_30
+//  320       }
+//  321       else
+//  322       {
+//  323         cp = ++buf_pointer;
+??float_conversion_25:
+        LDI     R16, 1
+        ADD     R12, R16
+        ADC     R13, R20
+        MOVW    R25:R24, R13:R12
+        RJMP    ??float_conversion_31
+//  324         while (cp > buf)
+//  325         {
+//  326           *cp = *(cp - 1);
+??float_conversion_32:
+        MOVW    R31:R30, R25:R24
+        LD      R16, -Z
+        STD     Z+1, R16
+//  327           cp--;
+        SBIW    R25:R24, 1
+//  328         }
+??float_conversion_31:
+        CP      R10, R24
+        CPC     R11, R25
+        BRCS    ??float_conversion_32
+//  329       }
+//  330       *buf = '1';
+??float_conversion_30:
+        MOVW    R31:R30, R11:R10
+        LDI     R16, 49
+        ST      Z, R16
+//  331     }
+//  332   }
+//  333 CLEAN_UP:
+//  334   if (g_flag)            /* %G - Remove trailing zeros */
+??float_conversion_19:
+        LDD     R16, Y+17
+        TST     R16
+        BRNE    ??float_conversion_33
+        RJMP    ??float_conversion_34
+//  335   {
+//  336     while (*(buf_pointer - 1) == '0')
+//  337     {
+//  338       buf_pointer--;
+??float_conversion_35:
+        LDI     R16, 255
+        ADD     R12, R16
+        ADC     R13, R16
+//  339     }
+??float_conversion_33:
+        MOVW    R31:R30, R13:R12
+        LD      R16, -Z
+        CPI     R16, 48
+        BREQ    ??float_conversion_35
+//  340     if (*(buf_pointer - 1) == '.')
+        CPI     R16, 46
+        BRNE    ??float_conversion_34
+//  341     {
+//  342       buf_pointer--;
+        LDI     R16, 255
+        ADD     R12, R16
+        ADC     R13, R16
+//  343     }
+//  344   }
+//  345   if (format_flag)        /* %e or %E */
+??float_conversion_34:
+        LDD     R16, Y+16
+        TST     R16
+        BRNE    $+2+2
+        RJMP    ??float_conversion_36
+//  346   {
+//  347     *buf_pointer++ = format_flag;
+        MOVW    R31:R30, R13:R12
+        ST      Z, R16
+//  348     if (integral_10_log < 0)
+        TST     R9
+        BRPL    ??float_conversion_37
+//  349     {
+//  350       *buf_pointer++ = '-';
+        LDI     R16, 45
+        STD     Z+1, R16
+        LDI     R16, 2
+        ADD     R12, R16
+        LDI     R16, 0
+        ADC     R13, R16
+//  351       integral_10_log = -integral_10_log;
+        NEG     R9
+        NEG     R8
+        SBC     R9, R16
+        RJMP    ??float_conversion_38
+//  352     }
+//  353     else
+//  354     {
+//  355       *buf_pointer++ = '+';
+??float_conversion_37:
+        LDI     R16, 43
+        STD     Z+1, R16
+        LDI     R16, 2
+        ADD     R12, R16
+        LDI     R16, 0
+        ADC     R13, R16
+//  356     }
+//  357     n = 0;
+??float_conversion_38:
+        CLR     R4
+        CLR     R5
+//  358     buf_pointer +=3;
+        LDI     R16, 3
+        ADD     R12, R16
+        ADC     R13, R4
+//  359     do
+//  360     {
+//  361       n++;
+??float_conversion_39:
+        LDI     R16, 1
+        ADD     R4, R16
+        LDI     R16, 0
+        ADC     R5, R16
+//  362       *buf_pointer++ = (integral_10_log % 10) + '0'; // Запись в буфер цифр экспоненты
+        LDI     R20, 10
+        LDI     R21, 0
+        MOVW    R17:R16, R9:R8
+        RCALL   ?SS_DIVMOD_L02
+        SUBI    R20, 208
+        MOVW    R31:R30, R13:R12
+        ST      Z+, R20
+        MOVW    R13:R12, R31:R30
+//  363       integral_10_log /= 10;
+        LDI     R20, 10
+        LDI     R21, 0
+        MOVW    R17:R16, R9:R8
+        RCALL   ?SS_DIVMOD_L02
+        MOVW    R9:R8, R17:R16
+//  364     } while ( integral_10_log || n < 2 );
+        OR      R16, R17
+        BRNE    ??float_conversion_39
+        LDI     R16, 2
+        CP      R4, R16
+        LDI     R16, 0
+        CPC     R5, R16
+        BRLT    ??float_conversion_39
+//  365     for ( i = n ; n > 0 ; n-- )
+        MOVW    R7:R6, R5:R4
+        MOVW    R25:R24, R5:R4
+//  366       *(buf_pointer - 4 - i + n) = *(buf_pointer - n);
+??float_conversion_40:
+        MOVW    R17:R16, R5:R4
+        NEG     R17
+        NEG     R16
+        SBCI    R17, 0
+        MOVW    R31:R30, R13:R12
+        ADD     R30, R16
+        ADC     R31, R17
+        LD      R18, Z
+        MOVW    R17:R16, R7:R6
+        NEG     R17
+        NEG     R16
+        SBCI    R17, 0
+        MOVW    R31:R30, R13:R12
+        ADD     R30, R16
+        ADC     R31, R17
+        ADD     R30, R4
+        ADC     R31, R5
+        SBIW    R31:R30, 4
+        ST      Z, R18
+        LDI     R16, 255
+        ADD     R4, R16
+        ADC     R5, R16
+        SBIW    R25:R24, 1
+        BRNE    ??float_conversion_40
+//  367     buf_pointer -= 3;
+        LDI     R16, 253
+        ADD     R12, R16
+        LDI     R16, 255
+        ADC     R13, R16
+//  368   }
+//  369   *buf_pointer=0;
+??float_conversion_36:
+        MOVW    R31:R30, R13:R12
+        LDI     R16, 0
+        ST      Z, R16
+//  370   return buf_pointer;
+        MOVW    R17:R16, R13:R12
+        LDI     R30, 19
+        RJMP    ?EPILOGUE_B16_L09
+//  371 }
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01cH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01dH
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01eH
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EEARH:
+
+        END
+// 
+// 1 288 bytes in segment CODE
+// 
+// 1 288 bytes of CODE memory
+//
+//Errors: none
+//Warnings: none

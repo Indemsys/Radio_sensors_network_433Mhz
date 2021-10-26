@@ -1,0 +1,28 @@
+Monitor.pbi: \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Monitor.c \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\iom8.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc/iomacro.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc/bitdefinitions/iom8.inc \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\ina90.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc/inavr.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\intrinsics.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc/comp_A90.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib\string.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib/sysmac.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib\pgmspace.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib/string.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib\stdio.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib/stdarg.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib\stdlib.h \
+  C:\Program\ Files\ (x86)\IAR\ Systems\Embedded\ Workbench\ 8.4\avr\inc\clib\ctype.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/main.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/USART.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/Monitor.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/bin_defines.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/wrk_params.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/DS1Wire.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/ADC.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/Timers.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/RF_settings.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/RF_transmitter.h \
+  D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter/Util.h

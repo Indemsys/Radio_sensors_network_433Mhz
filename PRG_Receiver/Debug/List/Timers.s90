@@ -1,0 +1,345 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR      26/Oct/2021  16:53:18
+// Copyright 1996-2021 IAR Systems AB.
+//
+//    Source file  =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+//    Command line =  
+//        -f C:\Users\aly\AppData\Local\Temp\EW6866.tmp
+//        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+//        --cpu=m8 -ms -o
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+//        -lCN
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        -lB
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+//        --eeprom_size 512 --clib -Ohz)
+//    Locale       =  Russian_RUS.1251
+//    List file    =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\Timers.s90
+//
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME Timers
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        PUBLIC TIMER0_init
+        PUBLIC TIMER1_CTC_Init
+        PUBLIC TIMER1_CTC_Stop
+        PUBLIC TIMER1_OCB_force_state
+        PUBLIC TIMER1_OCB_int_dis
+        PUBLIC TIMER1_OCB_int_en
+        PUBLIC TIMER1_OCB_outmod_set0
+        PUBLIC TIMER1_OCB_outmod_set1
+        PUBWEAK _A_OCR1A
+        PUBWEAK _A_TCCR0
+        PUBWEAK _A_TCCR1A
+        PUBWEAK _A_TCCR1B
+        PUBWEAK _A_TIFR
+        PUBWEAK _A_TIMSK
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+
+// D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+//    1 #include <iom8.h>
+
+        ASEGN ABSOLUTE:DATA:NOROOT,059H
+// union <unnamed> volatile __io _A_TIMSK
+_A_TIMSK:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,058H
+// union <unnamed> volatile __io _A_TIFR
+_A_TIFR:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,053H
+// union <unnamed> volatile __io _A_TCCR0
+_A_TCCR0:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,04fH
+// union <unnamed> volatile __io _A_TCCR1A
+_A_TCCR1A:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,04eH
+// union <unnamed> volatile __io _A_TCCR1B
+_A_TCCR1B:
+        DS8 1
+
+        ASEGN ABSOLUTE:DATA:NOROOT,04aH
+// union <unnamed> volatile __io _A_OCR1A
+_A_OCR1A:
+        DS8 2
+
+        RSEG `CODE`:CODE:NOROOT(1)
+TIMER1_CTC_Stop:
+        CODE
+        LDI     R16, 0
+        OUT     0x2E, R16
+        REQUIRE ?Subroutine1
+        REQUIRE _A_TCCR1B
+        REQUIRE _A_TCCR1A
+        ;               // Fall through to label ?Subroutine1
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine1:
+        OUT     0x2F, R16
+        RET
+//    2 #include <ina90.h>
+//    3 #include "main.h"
+//    4 #include "Timers.h"
+//    5 #include "bin_defines.h"
+//    6 
+//    7 
+//    8 /*
+//    9   Программирование таймера 1 в режиме CTC на заданный период
+//   10 
+//   11   Период рассчитываеться в секундах как:  period/Fosc
+//   12 
+//   13 
+//   14 
+//   15 */
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   16 void TIMER1_CTC_Init(unsigned int period)
+TIMER1_CTC_Init:
+        CODE
+//   17 {
+        MOV     R18, R16
+//   18 
+//   19   unsigned char tmp;
+//   20   // Предварительно выключим
+//   21 
+//   22   TIMER1_CTC_Stop();
+        RCALL   TIMER1_CTC_Stop
+//   23 
+//   24   OCR1A = period;
+        OUT     0x2B, R17
+        OUT     0x2A, R18
+//   25 
+//   26   // Программируем канал B в режим очистки таймера по совпадению (CTC) c TOP величиной в OCR1A
+//   27   // Канал A отключен
+//   28   TCCR1A = b00000000; //
+        LDI     R16, 0
+        OUT     0x2F, R16
+//   29 
+//   30   // Источник тактов - частота кварца 16 Мег
+//   31   // Режим CTC
+//   32   TCCR1B = b00001001;
+        LDI     R16, 9
+        OUT     0x2E, R16
+//   33 
+//   34   tmp    = TIMSK;
+//   35   tmp    = tmp & ~(1 << TICIE1) & ~(1 << OCIE1A) & ~(1 << OCIE1B) & ~(1 << TOIE1);
+//   36   TIMSK  = tmp;
+        IN      R16, 0x39
+        ANDI    R16, 0xC3
+        OUT     0x39, R16
+//   37 
+//   38   tmp    = TIFR;
+//   39   tmp    = ~tmp | (1 << ICF1) | (1 << OCF1A) | (1 << OCF1B) | (1 << TOV1); // Флаги сбрасываються записью единицы
+//   40   TIFR   = tmp;
+        IN      R16, 0x38
+        COM     R16
+        ORI     R16, 0x3C
+        OUT     0x38, R16
+//   41 
+//   42 
+//   43 }
+        RET
+        REQUIRE _A_OCR1A
+        REQUIRE _A_TCCR1A
+        REQUIRE _A_TCCR1B
+        REQUIRE _A_TIMSK
+        REQUIRE _A_TIFR
+//   44 
+//   45 /*
+//   46   Разрешение прерывания от компаратора B таймера 1
+//   47 
+//   48 */
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   49 void TIMER1_OCB_int_en(void)
+TIMER1_OCB_int_en:
+        CODE
+//   50 {
+//   51   unsigned char tmp;
+//   52 
+//   53   tmp    = TIFR;
+//   54   tmp    = ~tmp | (1 << OCF1B); // Флаги сбрасываються записью единицы
+//   55   TIFR   = tmp;
+        RCALL   ?Subroutine0
+//   56 
+//   57   tmp    = TIMSK;
+//   58   tmp    = tmp  | (1 << OCIE1B);
+//   59   TIMSK  = tmp;
+??CrossCallReturnLabel_0:
+        ORI     R16, 0x08
+        REQUIRE ?Subroutine2
+        REQUIRE _A_TIFR
+        REQUIRE _A_TIMSK
+        ;               // Fall through to label ?Subroutine2
+//   60 
+//   61 }
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine2:
+        OUT     0x39, R16
+        RET
+//   62 
+//   63 /*
+//   64   Запрещение прерывания от компаратора B таймера 1
+//   65 
+//   66 */
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   67 void TIMER1_OCB_int_dis(void)
+TIMER1_OCB_int_dis:
+        CODE
+//   68 {
+//   69   unsigned char tmp;
+//   70 
+//   71   tmp    = TIFR;
+//   72   tmp    = ~tmp | (1 << OCF1B); // Флаги сбрасываються записью единицы
+//   73   TIFR   = tmp;
+        RCALL   ?Subroutine0
+//   74 
+//   75   tmp    = TIMSK;
+//   76   tmp    = tmp  & ~(1 << OCIE1B);
+//   77   TIMSK  = tmp;
+??CrossCallReturnLabel_1:
+        ANDI    R16, 0xF7
+        RJMP    ?Subroutine2
+        REQUIRE _A_TIFR
+        REQUIRE _A_TIMSK
+//   78 
+//   79 }
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine0:
+        IN      R16, 0x38
+        COM     R16
+        ORI     R16, 0x08
+        OUT     0x38, R16
+        IN      R16, 0x39
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+TIMER1_OCB_outmod_set0:
+        CODE
+        IN      R16, 0x2F
+        ANDI    R16, 0xCF
+        ORI     R16, 0x20
+        RJMP    ?Subroutine1
+        REQUIRE _A_TCCR1A
+
+        RSEG `CODE`:CODE:NOROOT(1)
+TIMER1_OCB_outmod_set1:
+        CODE
+        IN      R16, 0x2F
+        ORI     R16, 0x30
+        RJMP    ?Subroutine1
+        REQUIRE _A_TCCR1A
+//   80 
+//   81 
+//   82 /*
+//   83   Принудительно установить 0 на выходе OCA и подготовить установку заданного бита
+//   84 
+//   85 */
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   86 void TIMER1_OCB_force_state(unsigned char bits)
+TIMER1_OCB_force_state:
+        CODE
+//   87 {
+//   88 
+//   89   if (bits & 1)
+        BST     R16, 0
+        BRTC    ??TIMER1_OCB_force_state_0
+//   90     TIMER1_OCB_outmod_set1();
+        RJMP    TIMER1_OCB_outmod_set1
+//   91   else
+//   92     TIMER1_OCB_outmod_set0();
+??TIMER1_OCB_force_state_0:
+        RJMP    TIMER1_OCB_outmod_set0
+//   93 
+//   94 }
+//   95 
+//   96 void TIMER1_OCB_outmod_set1(void)
+//   97 {
+//   98   unsigned char tmp;
+//   99   tmp = TCCR1A;
+//  100   tmp = (tmp & 0xCF) | b00110000;
+//  101   TCCR1A = tmp;
+//  102 }
+//  103 
+//  104 void TIMER1_OCB_outmod_set0(void)
+//  105 {
+//  106   unsigned char tmp;
+//  107   tmp = TCCR1A;
+//  108   tmp = (tmp & 0xCF) | b00100000;
+//  109   TCCR1A = tmp;
+//  110 }
+//  111 
+//  112 
+//  113 void TIMER1_CTC_Stop(void)
+//  114 {
+//  115   TCCR1B = 0;
+//  116   TCCR1A = 0;
+//  117 
+//  118 }
+//  119 
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  120 void TIMER0_init(void)
+TIMER0_init:
+        CODE
+//  121 {
+//  122   // Инициализируем прерывания от таймера 0, для обслуживания всяких временных интервалов	
+//  123   // Частоту следования прерываний выбираем (16 000 000/64)/256 = 976,5625 Гц -> 0.001024 мс
+//  124   TCCR0  = b00000011; // Предделитель = 64
+        LDI     R16, 3
+        OUT     0x33, R16
+//  125   TIFR  |= b00000001; //
+        IN      R16, 0x38
+        ORI     R16, 0x01
+        OUT     0x38, R16
+//  126   TIMSK |= b00000001; // Разрешаем прерывания
+        IN      R16, 0x39
+        ORI     R16, 0x01
+        RJMP    ?Subroutine2
+        REQUIRE _A_TCCR0
+        REQUIRE _A_TIFR
+        REQUIRE _A_TIMSK
+//  127 }
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01cH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01dH
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01eH
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EEARH:
+
+        END
+// 
+//   7 bytes in segment ABSOLUTE
+// 104 bytes in segment CODE
+// 
+// 104 bytes of CODE memory
+//   0 bytes of DATA memory (+ 7 bytes shared)
+//
+//Errors: none
+//Warnings: none

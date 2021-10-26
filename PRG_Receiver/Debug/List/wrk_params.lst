@@ -1,0 +1,1238 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  16:53:18
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\wrk_params.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW6868.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\wrk_params.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+#        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+#        --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\wrk_params.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj\wrk_params.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\wrk_params.c
+      1          #include <iom8.h>
+      2          #include <ina90.h>
+      3          #include <string.h>
+      4          #include <pgmspace.h>
+      5          #include <stdio.h>
+      6          #include <stdlib.h>
+      7          #include "main.h"
+      8          #include "Util.h"
+      9          #include "..\PRG_Transmitter\RF_settings.h"
+     10          #include "wrk_params.h"
+     11          
+     12          /*
+     13            Объявления рабочих параметров
+     14          */
+     15          
+
+   \                                 In  segment EEPROM_N, align 1, keep-with-next
+     16          __no_init __eeprom TPARAMS ee_wp;       // Рабочие параметры в EEPROM
+     17          __no_init __eeprom unsigned int ee_crc; // Контрольная сумма в EEPROM
+   \                     ee_crc:
+   \   00000000                      DS8 2
+   \                     ee_wp:
+   \   00000002                      DS8 13
+     18          
+
+   \                                 In  segment NEAR_N, align 1, keep-with-next
+     19          __no_init TPARAMS wp;                   // Рабочие параметры в RAM
+   \                     wp:
+   \   00000000                      DS8 13
+     20          
+     21          
+     22          
+
+   \                                 In  segment NEAR_F, align 1, keep-with-next
+     23          __flash DWAR_TYPE dwvar[]=
+   \                     dwvar:
+   \   00000000   ............       DC16 `?<Constant "SFLAGS">`, ee_wp + 4H, wp + 4H
+   \   00000006   02                 DC8 2
+   \   00000007   000000000000       DD 0H, 0H, 477FFF00H
+   \              0000FF00477F
+   \   00000013   0000               DC8 0, 0
+   \   00000015   0000               DC16 0H
+   \   00000017   02                 DC8 2
+   \   00000018   ............       DC16 `?<Constant "PREAMB">`, ee_wp + 6H, wp + 6H
+   \   0000001E   02                 DC8 2
+   \   0000001F   C20047590000       DD 4759C200H, 0H, 477FFF00H
+   \              0000FF00477F
+   \   0000002B   0000               DC8 0, 0
+   \   0000002D   0000               DC16 0H
+   \   0000002F   02                 DC8 2
+   \   00000030   ............       DC16 `?<Constant "BTRATE">`, ee_wp + 2H, wp + 2H
+   \   00000036   02                 DC8 2
+   \   00000037   0000467A0000       DD 467A0000H, 457A0000H, 477FFF00H
+   \              457AFF00477F
+   \   00000043   0000               DC8 0, 0
+   \   00000045   0000               DC16 0H
+   \   00000047   02                 DC8 2
+   \   00000048   ............       DC16 `?<Constant "KEYCOD">`, ee_wp + 8H, wp + 8H
+   \   0000004E   04                 DC8 4
+   \   0000004F   C00044790000       DD 4479C000H, 0H, 477FFF00H
+   \              0000FF00477F
+   \   0000005B   0000               DC8 0, 0
+   \   0000005D   0000               DC16 0H
+   \   0000005F   04                 DC8 4
+   \   00000060   ............       DC16 `?<Constant "DEVADR">`, ee_wp + 0CH, wp + 0CH
+   \   00000066   00                 DC8 0
+   \   00000067   00003F800000       DD 3F800000H, 0H, 437F0000H
+   \              00000000437F
+   \   00000073   0000               DC8 0, 0
+   \   00000075   0000               DC16 0H
+   \   00000077   01                 DC8 1
+     24          {
+     25            {                     
+     26              "SFLAGS",               // Строковое описание
+     27              &ee_wp.flags,           // Указатель на значение переменной в EEPROM
+     28              &wp.flags,              // Указатель на значение переменной в RAM
+     29              tunsigned_int,          // Идентификатор типа переменной
+     30              0,                      // Значение по умолчанию
+     31              0,                      // Минимальное возможное значение
+     32              65535,                  // Максимальное возможное значение
+     33              0,                      // Количество знаков после запятой
+     34              0,                      // Аттрибуты переменной
+     35              0,                      // Указатель на функцию выполняемую после редактирования
+     36              sizeof(unsigned int)    // Длинна переменной
+     37            },                    
+     38            {                     
+     39              "PREAMB",           
+     40              &ee_wp.preamble,    
+     41              &wp.preamble,       
+     42              tunsigned_int,      
+     43              PREAMBLE,           
+     44              0,                  
+     45              65535,              
+     46              0,                  
+     47              0,                  
+     48              0,                  
+     49              sizeof(unsigned int)
+     50            },                    
+     51            {
+     52              "BTRATE",
+     53              &ee_wp.rf_bitrate,
+     54              &wp.rf_bitrate,
+     55              tunsigned_int,
+     56              16000,
+     57              4000,
+     58              65535,
+     59              0,
+     60              0,
+     61              0,
+     62              sizeof(unsigned int)
+     63            },
+     64            {
+     65              "KEYCOD",
+     66              &ee_wp.keycode,
+     67              &wp.keycode,
+     68              tunsigned_long,
+     69              999,
+     70              0,
+     71              65535,
+     72              0,
+     73              0,
+     74              0,
+     75              sizeof(unsigned long)
+     76            },
+     77            {
+     78              "DEVADR",
+     79              &ee_wp.devaddr,
+     80              &wp.devaddr,
+     81              tunsigned_char,
+     82              1,
+     83              0,
+     84              255,
+     85              0,
+     86              0,
+     87              0,
+     88              sizeof(unsigned char)
+     89            },
+     90            
+     91          };
+     92          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     93          int get_params_num(void)
+   \                     get_params_num:
+     94          {
+     95            return  (sizeof(dwvar)/sizeof(dwvar[0]));
+   \   00000000   E005               LDI     R16, 5
+   \   00000002   E010               LDI     R17, 0
+   \   00000004   9508               RET
+     96          }
+     97          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     98          char* get_params_name(unsigned char indx)
+   \                     get_params_name:
+     99          {
+    100            return  dwvar[indx].name;
+   \   00000000   E010               LDI     R17, 0
+   \   00000002   ....               RCALL   ?Subroutine29
+   \                     ??CrossCallReturnLabel_55:
+   \   00000004   01F8               MOVW    R31:R30, R17:R16
+   \   00000006   ....               SUBI    R30, LOW((-(dwvar) & 0xFFFF))
+   \   00000008   ....               SBCI    R31, (-(dwvar) & 0xFFFF) >> 8
+   \   0000000A   9105               LPM     R16, Z+
+   \   0000000C   9114               LPM     R17, Z
+   \   0000000E   9508               RET
+    101          }
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine29:
+   \   00000000   E148               LDI     R20, 24
+   \   00000002   E050               LDI     R21, 0
+   \   00000004   ....               RJMP    ?S_EC_MUL_L02
+    102          
+    103          
+    104          /* ==========================================================
+    105             Преобразовать параметр в строку
+    106             ========================================================== */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    107          void Param_to_str(unsigned char *buf,int indx)
+   \                     Param_to_str:
+    108          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+   \   00000002   01D8               MOVW    R27:R26, R17:R16
+    109            switch (dwvar[indx].vartype)
+   \   00000004   0189               MOVW    R17:R16, R19:R18
+   \   00000006   ....               RCALL   ?Subroutine6
+   \                     ??CrossCallReturnLabel_12:
+   \   00000008   2300               TST     R16
+   \   0000000A   F059               BREQ    ??Param_to_str_0
+   \   0000000C   950A               DEC     R16
+   \   0000000E   F049               BREQ    ??Param_to_str_0
+   \   00000010   950A               DEC     R16
+   \   00000012   F061               BREQ    ??Param_to_str_1
+   \   00000014   950A               DEC     R16
+   \   00000016   F051               BREQ    ??Param_to_str_1
+   \   00000018   950A               DEC     R16
+   \   0000001A   F091               BREQ    ??Param_to_str_2
+   \   0000001C   950A               DEC     R16
+   \   0000001E   F081               BREQ    ??Param_to_str_2
+   \   00000020   C028               RJMP    ??Param_to_str_3
+    110            {
+    111            case tunsigned_char:
+    112            case tsigned_char:
+    113              *buf++='0';
+   \                     ??Param_to_str_0:
+   \   00000022   ....               RCALL   ?Subroutine18
+    114              *buf++='x';
+   \                     ??CrossCallReturnLabel_30:
+   \   00000024   ....               RCALL   ?Subroutine14
+    115              *buf++=hex_to_ascii(*(char*)dwvar[indx].val>>4);
+   \                     ??CrossCallReturnLabel_24:
+   \   00000026   9502               SWAP    R16
+   \   00000028   700F               ANDI    R16, 0x0F
+   \   0000002A   C01D               RJMP    ??Param_to_str_4
+    116              *buf++=hex_to_ascii(*(char*)dwvar[indx].val);
+    117              *buf++=0;
+    118          //    sprintf((char*)buf,"%d",*((unsigned char*)dwvar[indx].val));
+    119              break;
+    120          //    sprintf((char*)buf,"%d",*((signed char*)dwvar[indx].val));
+    121          //    break;
+    122            case tunsigned_int:
+    123            case tsigned_int:
+    124          //    sprintf((char*)buf,"%d",*((unsigned int*)dwvar[indx].val));
+    125              *buf++='0';
+   \                     ??Param_to_str_1:
+   \   0000002C   ....               RCALL   ?Subroutine18
+    126              *buf++='x';
+   \                     ??CrossCallReturnLabel_31:
+   \   0000002E   ....               RCALL   ?Subroutine17
+    127              *buf++=hex_to_ascii(*(int*)dwvar[indx].val>>12);
+   \                     ??CrossCallReturnLabel_66:
+   \   00000030   8101               LDD     R16, Z+1
+   \   00000032   9505               ASR     R16
+   \   00000034   9505               ASR     R16
+   \   00000036   9505               ASR     R16
+   \   00000038   9505               ASR     R16
+   \   0000003A   ....               RCALL   ?Subroutine1
+    128              *buf++=hex_to_ascii(*(int*)dwvar[indx].val>>8);
+    129              *buf++=hex_to_ascii(*(int*)dwvar[indx].val>>4);
+   \                     ??CrossCallReturnLabel_2:
+   \   0000003C   ....               RCALL   ?SS_SHR_L02
+   \   0000003E   C013               RJMP    ??Param_to_str_4
+    130              *buf++=hex_to_ascii(*(int*)dwvar[indx].val);
+    131              *buf++=0;
+    132          
+    133              break;
+    134            case tunsigned_long:
+    135            case tsigned_long:
+    136              *buf++='0';
+   \                     ??Param_to_str_2:
+   \   00000040   ....               RCALL   ?Subroutine18
+    137              *buf++='x';
+   \                     ??CrossCallReturnLabel_32:
+   \   00000042   ....               RCALL   ?Subroutine15
+    138              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>28);
+   \                     ??CrossCallReturnLabel_26:
+   \   00000044   9506               LSR     R16
+   \   00000046   9506               LSR     R16
+   \   00000048   9506               LSR     R16
+   \   0000004A   9506               LSR     R16
+   \   0000004C   ....               RCALL   hex_to_ascii
+   \   0000004E   ....               RCALL   ?Subroutine15
+    139              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>24);
+   \                     ??CrossCallReturnLabel_27:
+   \   00000050   ....               RCALL   ?Subroutine7
+    140              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>20);
+   \                     ??CrossCallReturnLabel_14:
+   \   00000052   E144               LDI     R20, 20
+   \   00000054   ....               RCALL   ?UL_SHR_L03
+   \   00000056   ....               RCALL   hex_to_ascii
+   \   00000058   ....               RCALL   ?Subroutine17
+    141              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>16);
+   \                     ??CrossCallReturnLabel_65:
+   \   0000005A   8102               LDD     R16, Z+2
+   \   0000005C   ....               RCALL   ?Subroutine7
+    142              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>12);
+   \                     ??CrossCallReturnLabel_15:
+   \   0000005E   E04C               LDI     R20, 12
+   \   00000060   ....               RCALL   ?UL_SHR_L03
+   \   00000062   ....               RCALL   ?Subroutine1
+    143              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>8);
+    144              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val>>4);
+   \                     ??CrossCallReturnLabel_3:
+   \   00000064   ....               RCALL   ?US_SHR_L02
+   \                     ??Param_to_str_4:
+   \   00000066   ....               RCALL   hex_to_ascii
+   \   00000068   ....               RCALL   ?Subroutine14
+    145              *buf++=hex_to_ascii(*(unsigned long*)dwvar[indx].val);
+   \                     ??CrossCallReturnLabel_25:
+   \   0000006A   ....               RCALL   hex_to_ascii
+   \   0000006C   930D               ST      X+, R16
+    146              *buf++=0;
+   \   0000006E   E000               LDI     R16, 0
+   \   00000070   930D               ST      X+, R16
+    147              break;
+    148            case tfloat:
+    149          //    sprintf((char*)buf,"%f",*((float*)dwvar[indx].val));
+    150              break;
+    151            case tdouble:
+    152          //    sprintf((char*)buf,"%f",*((double*)dwvar[indx].val));
+    153              break;
+    154            case tstring:
+    155          //    sprintf((char*)buf,"%s",(char*)(dwvar[indx].val));
+    156              break;
+    157            }
+    158          }
+   \                     ??Param_to_str_3:
+   \   00000072   E0E4               LDI     R30, 4
+   \   00000074   ....               RJMP    ?EPILOGUE_B4_L09
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine18:
+   \   00000000   E300               LDI     R16, 48
+   \   00000002   930D               ST      X+, R16
+   \   00000004   E708               LDI     R16, 120
+   \   00000006   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine17:
+   \   00000000   930D               ST      X+, R16
+   \   00000002   01FC               MOVW    R31:R30, R25:R24
+   \   00000004                      REQUIRE ??Subroutine34_0
+   \   00000004                      ;               // Fall through to label ??Subroutine34_0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ??Subroutine34_0:
+   \   00000000   9634               ADIW    R31:R30, 4
+   \   00000002   ....               RJMP    ??Subroutine35_0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine15:
+   \   00000000   ....               RCALL   ?Subroutine24
+   \                     ??CrossCallReturnLabel_43:
+   \   00000002   8103               LDD     R16, Z+3
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine24:
+   \   00000000   930D               ST      X+, R16
+   \   00000002                      REQUIRE ?Subroutine31
+   \   00000002                      ;               // Fall through to label ?Subroutine31
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine31:
+   \   00000000   01FC               MOVW    R31:R30, R25:R24
+   \   00000002   9634               ADIW    R31:R30, 4
+   \   00000004                      REQUIRE ??Subroutine35_0
+   \   00000004                      ;               // Fall through to label ??Subroutine35_0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ??Subroutine35_0:
+   \   00000000   9105               LPM     R16, Z+
+   \   00000002   91F4               LPM     R31, Z
+   \   00000004   2FE0               MOV     R30, R16
+   \   00000006   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine14:
+   \   00000000   ....               RCALL   ?Subroutine24
+   \                     ??CrossCallReturnLabel_42:
+   \   00000002   8100               LD      R16, Z
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine7:
+   \   00000000   ....               RCALL   ?Subroutine23
+   \                     ??CrossCallReturnLabel_39:
+   \   00000002   8122               LDD     R18, Z+2
+   \   00000004   8133               LDD     R19, Z+3
+   \   00000006   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine1:
+   \   00000000   ....               RCALL   hex_to_ascii
+   \   00000002   ....               RCALL   ?Subroutine24
+   \                     ??CrossCallReturnLabel_41:
+   \   00000004   8101               LDD     R16, Z+1
+   \   00000006   ....               RCALL   ?Subroutine23
+   \                     ??CrossCallReturnLabel_40:
+   \   00000008   E044               LDI     R20, 4
+   \   0000000A   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine23:
+   \   00000000   ....               RCALL   hex_to_ascii
+   \   00000002   930D               ST      X+, R16
+   \   00000004   ....               RCALL   ?Subroutine31
+   \                     ??CrossCallReturnLabel_72:
+   \   00000006   8100               LD      R16, Z
+   \   00000008   8111               LDD     R17, Z+1
+   \   0000000A   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine6:
+   \   00000000   ....               RCALL   ?Subroutine29
+   \                     ??CrossCallReturnLabel_58:
+   \   00000002   ....               LDI     R24, LOW(dwvar)
+   \   00000004   ....               LDI     R25, (dwvar) >> 8
+   \   00000006   0F80               ADD     R24, R16
+   \   00000008   1F91               ADC     R25, R17
+   \   0000000A   01FC               MOVW    R31:R30, R25:R24
+   \   0000000C   9636               ADIW    R31:R30, 6
+   \   0000000E   9104               LPM     R16, Z
+   \   00000010   9508               RET
+    159          
+    160          /* ==========================================================
+    161             Преобразовать строку в параметр
+    162             ========================================================== */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    163          void Str_to_param(unsigned char *buf,int indx)
+   \                     Str_to_param:
+    164          {
+   \   00000000   ....               RCALL   ?PROLOGUE8_L09
+   \   00000002                      REQUIRE ?Register_R4_is_cg_reg
+   \   00000002                      REQUIRE ?Register_R5_is_cg_reg
+   \   00000002                      REQUIRE ?Register_R6_is_cg_reg
+   \   00000002                      REQUIRE ?Register_R7_is_cg_reg
+   \   00000002   01C8               MOVW    R25:R24, R17:R16
+    165            unsigned char uch_tmp;
+    166            signed char sch_tmp;
+    167            unsigned int uin_tmp;
+    168            signed int sin_tmp;
+    169            unsigned long ulg_tmp;
+    170            signed long slg_tmp;
+    171            float f_tmp;
+    172            double d_tmp;
+    173            switch (dwvar[indx].vartype)
+   \   00000004   0189               MOVW    R17:R16, R19:R18
+   \   00000006   ....               RCALL   ?Subroutine29
+   \                     ??CrossCallReturnLabel_56:
+   \   00000008   ....               LDI     R26, LOW(dwvar)
+   \   0000000A   ....               LDI     R27, (dwvar) >> 8
+   \   0000000C   0FA0               ADD     R26, R16
+   \   0000000E   1FB1               ADC     R27, R17
+   \   00000010   01FD               MOVW    R31:R30, R27:R26
+   \   00000012   9636               ADIW    R31:R30, 6
+   \   00000014   9104               LPM     R16, Z
+   \   00000016   ....               LDI     R30, LOW(`?<Jumptable for Str_to_param>_0`)
+   \   00000018   ....               LDI     R31, (`?<Jumptable for Str_to_param>_0`) >> 8
+   \   0000001A   ....               RJMP    ?CV_SWITCH_L06
+    174            {
+    175            case tunsigned_char:
+    176              uch_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_0:
+   \   0000001C   ....               RCALL   ?Subroutine3
+   \                     ??CrossCallReturnLabel_6:
+   \   0000001E   F408               BRCC    ??Str_to_param_1
+    177              if (uch_tmp>((unsigned char)dwvar[indx].max)) uch_tmp=(unsigned char)dwvar[indx].max;
+   \   00000020   2F50               MOV     R21, R16
+   \                     ??Str_to_param_1:
+   \   00000022   ....               RCALL   ?Subroutine11
+   \                     ??CrossCallReturnLabel_20:
+   \   00000024   F438               BRCC    ??Str_to_param_2
+    178              if (uch_tmp<((unsigned char)dwvar[indx].min)) uch_tmp=(unsigned char)dwvar[indx].min;
+   \   00000026   C005               RJMP    ??Str_to_param_3
+    179              *(unsigned char*)dwvar[indx].val=uch_tmp;
+    180              break;
+    181            case tsigned_char:
+    182              sch_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_4:
+   \   00000028   ....               RCALL   ?Subroutine3
+   \                     ??CrossCallReturnLabel_7:
+   \   0000002A   F40C               BRGE    ??Str_to_param_5
+    183              if (sch_tmp>((signed char)dwvar[indx].max)) sch_tmp=(signed char)dwvar[indx].max;
+   \   0000002C   2F50               MOV     R21, R16
+   \                     ??Str_to_param_5:
+   \   0000002E   ....               RCALL   ?Subroutine11
+   \                     ??CrossCallReturnLabel_21:
+   \   00000030   F40C               BRGE    ??Str_to_param_2
+    184              if (sch_tmp<((signed char)dwvar[indx].min)) sch_tmp=(signed char)dwvar[indx].min;
+   \                     ??Str_to_param_3:
+   \   00000032   2F50               MOV     R21, R16
+    185              *(signed char*)dwvar[indx].val=sch_tmp;
+   \                     ??Str_to_param_2:
+   \   00000034   01FD               MOVW    R31:R30, R27:R26
+   \   00000036   9634               ADIW    R31:R30, 4
+   \   00000038   91A5               LPM     R26, Z+
+   \   0000003A   91B4               LPM     R27, Z
+   \   0000003C   935C               ST      X, R21
+    186              break;
+   \   0000003E   C03A               RJMP    ??Str_to_param_6
+    187            case tunsigned_int:
+    188              uin_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_7:
+   \   00000040   ....               RCALL   ?Subroutine2
+   \                     ??CrossCallReturnLabel_4:
+   \   00000042   F408               BRCC    ??Str_to_param_8
+    189              if (uin_tmp>((unsigned int)dwvar[indx].max)) uin_tmp=(unsigned int)dwvar[indx].max;
+   \   00000044   01B8               MOVW    R23:R22, R17:R16
+   \                     ??Str_to_param_8:
+   \   00000046   ....               RCALL   ?Subroutine9
+   \                     ??CrossCallReturnLabel_18:
+   \   00000048   F438               BRCC    ??Str_to_param_9
+    190              if (uin_tmp<((unsigned int)dwvar[indx].min)) uin_tmp=(unsigned int)dwvar[indx].min;
+   \   0000004A   C005               RJMP    ??Str_to_param_10
+    191              *(unsigned int*)dwvar[indx].val=uin_tmp;
+    192              break;
+    193            case tsigned_int:
+    194              sin_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_11:
+   \   0000004C   ....               RCALL   ?Subroutine2
+   \                     ??CrossCallReturnLabel_5:
+   \   0000004E   F40C               BRGE    ??Str_to_param_12
+    195              if (sin_tmp>((signed int)dwvar[indx].max)) sin_tmp=(signed int)dwvar[indx].max;
+   \   00000050   01B8               MOVW    R23:R22, R17:R16
+   \                     ??Str_to_param_12:
+   \   00000052   ....               RCALL   ?Subroutine9
+   \                     ??CrossCallReturnLabel_19:
+   \   00000054   F40C               BRGE    ??Str_to_param_9
+    196              if (sin_tmp<((signed int)dwvar[indx].min)) sin_tmp=(signed int)dwvar[indx].min;
+   \                     ??Str_to_param_10:
+   \   00000056   01B8               MOVW    R23:R22, R17:R16
+    197              *(signed int*)dwvar[indx].val=sin_tmp;
+   \                     ??Str_to_param_9:
+   \   00000058   01FD               MOVW    R31:R30, R27:R26
+   \   0000005A   ....               RCALL   ??Subroutine34_0
+   \                     ??CrossCallReturnLabel_67:
+   \   0000005C   8360               ST      Z, R22
+   \   0000005E   8371               STD     Z+1, R23
+    198              break;
+   \   00000060   C029               RJMP    ??Str_to_param_6
+    199            case tunsigned_long:
+    200              ulg_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_13:
+   \   00000062   ....               RCALL   ?Subroutine5
+   \                     ??CrossCallReturnLabel_11:
+   \   00000064   ....               RCALL   ?F2UL_L04
+   \   00000066   ....               RCALL   ?Subroutine19
+   \                     ??CrossCallReturnLabel_33:
+   \   00000068   F408               BRCC    ??CrossCallReturnLabel_51
+    201              if (ulg_tmp>((unsigned long)dwvar[indx].max)) ulg_tmp=(unsigned long)dwvar[indx].max;
+   \   0000006A   ....               RCALL   ?Subroutine28
+   \                     ??CrossCallReturnLabel_51:
+   \   0000006C   ....               RCALL   ?Subroutine33
+   \                     ??CrossCallReturnLabel_61:
+   \   0000006E   ....               RCALL   ?Subroutine12
+   \                     ??CrossCallReturnLabel_22:
+   \   00000070   ....               RCALL   ?Subroutine20
+   \                     ??CrossCallReturnLabel_35:
+   \   00000072   F458               BRCC    ??CrossCallReturnLabel_53
+    202              if (ulg_tmp<((unsigned long)dwvar[indx].min)) ulg_tmp=(unsigned long)dwvar[indx].min;
+   \   00000074   C009               RJMP    ??Str_to_param_14
+    203              *(unsigned long*)dwvar[indx].val=ulg_tmp;
+    204              break;
+    205            case tsigned_long:
+    206              slg_tmp=strtol((char*)buf,0,0);
+   \                     ??Str_to_param_15:
+   \   00000076   ....               RCALL   ?Subroutine5
+   \                     ??CrossCallReturnLabel_10:
+   \   00000078   ....               RCALL   ?F2SL_L04
+   \   0000007A   ....               RCALL   ?Subroutine19
+   \                     ??CrossCallReturnLabel_34:
+   \   0000007C   F40C               BRGE    ??CrossCallReturnLabel_52
+    207              if (slg_tmp>((signed long)dwvar[indx].max)) slg_tmp=(signed long)dwvar[indx].max;
+   \   0000007E   ....               RCALL   ?Subroutine28
+   \                     ??CrossCallReturnLabel_52:
+   \   00000080   ....               RCALL   ?Subroutine33
+   \                     ??CrossCallReturnLabel_62:
+   \   00000082   ....               RCALL   ??Subroutine36_0
+   \                     ??CrossCallReturnLabel_73:
+   \   00000084   ....               RCALL   ?Subroutine20
+   \                     ??CrossCallReturnLabel_36:
+   \   00000086   F40C               BRGE    ??CrossCallReturnLabel_53
+    208              if (slg_tmp<((signed long)dwvar[indx].min)) slg_tmp=(signed long)dwvar[indx].min;
+   \                     ??Str_to_param_14:
+   \   00000088   ....               RCALL   ?Subroutine28
+    209              *(signed long*)dwvar[indx].val=slg_tmp;
+   \                     ??CrossCallReturnLabel_53:
+   \   0000008A   01FD               MOVW    R31:R30, R27:R26
+   \   0000008C   ....               RCALL   ??Subroutine34_0
+   \                     ??CrossCallReturnLabel_68:
+   \   0000008E   8240               ST      Z, R4
+   \   00000090   8251               STD     Z+1, R5
+   \   00000092   8262               STD     Z+2, R6
+   \   00000094   8273               STD     Z+3, R7
+    210              break;
+   \   00000096   C00E               RJMP    ??Str_to_param_6
+    211            case tfloat:
+    212              f_tmp=atof((char*)buf);
+   \                     ??Str_to_param_16:
+   \   00000098   ....               RCALL   ?Subroutine0
+    213              if (f_tmp>((float)dwvar[indx].max)) f_tmp=(float)dwvar[indx].max;
+    214              if (f_tmp<((float)dwvar[indx].min)) f_tmp=(float)dwvar[indx].min;
+    215              *(float*)dwvar[indx].val=f_tmp;
+   \                     ??CrossCallReturnLabel_0:
+   \   0000009A   91A5               LPM     R26, Z+
+   \   0000009C   91B4               LPM     R27, Z
+   \   0000009E   920D               ST      X+, R0
+   \   000000A0   921D               ST      X+, R1
+   \   000000A2   922D               ST      X+, R2
+   \   000000A4   923C               ST      X, R3
+    216              break;
+   \   000000A6   C006               RJMP    ??Str_to_param_6
+    217            case tdouble:
+    218              d_tmp=atof((char*)buf);
+   \                     ??Str_to_param_17:
+   \   000000A8   ....               RCALL   ?Subroutine0
+    219              if (d_tmp>((double)dwvar[indx].max)) d_tmp=(double)dwvar[indx].max;
+    220              if (d_tmp<((double)dwvar[indx].min)) d_tmp=(double)dwvar[indx].min;
+    221              *(double*)dwvar[indx].val=d_tmp;
+   \                     ??CrossCallReturnLabel_1:
+   \   000000AA   ....               RCALL   ??Subroutine35_0
+   \                     ??CrossCallReturnLabel_69:
+   \   000000AC   8200               ST      Z, R0
+   \   000000AE   8211               STD     Z+1, R1
+   \   000000B0   8222               STD     Z+2, R2
+   \   000000B2   8233               STD     Z+3, R3
+    222              break;
+    223            }
+    224          }
+   \                     ??Str_to_param_6:
+   \   000000B4   E0E8               LDI     R30, 8
+   \   000000B6   ....               RJMP    ?EPILOGUE_B8_L09
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine20:
+   \   00000000   1640               CP      R4, R16
+   \   00000002   0651               CPC     R5, R17
+   \   00000004   0662               CPC     R6, R18
+   \   00000006   0673               CPC     R7, R19
+   \   00000008   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine19:
+   \   00000000   1504               CP      R16, R4
+   \   00000002   0515               CPC     R17, R5
+   \   00000004   0526               CPC     R18, R6
+   \   00000006   0537               CPC     R19, R7
+   \   00000008   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine11:
+   \   00000000   ....               RCALL   ?Subroutine22
+   \                     ??CrossCallReturnLabel_79:
+   \   00000002   1750               CP      R21, R16
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine9:
+   \   00000000   ....               RCALL   ?Subroutine22
+   \                     ??CrossCallReturnLabel_78:
+   \   00000002   1760               CP      R22, R16
+   \   00000004   0771               CPC     R23, R17
+   \   00000006   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine5:
+   \   00000000   ....               RCALL   ?Subroutine27
+   \                     ??CrossCallReturnLabel_50:
+   \   00000002   ....               RCALL   ?Subroutine28
+   \                     ??CrossCallReturnLabel_54:
+   \   00000004   ....               RJMP    ?Subroutine25
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine28:
+   \   00000000   0128               MOVW    R5:R4, R17:R16
+   \   00000002   0139               MOVW    R7:R6, R19:R18
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine25:
+   \   00000000   01FD               MOVW    R31:R30, R27:R26
+   \   00000002   963F               ADIW    R31:R30, 15
+   \   00000004                      REQUIRE ?Subroutine32
+   \   00000004                      ;               // Fall through to label ?Subroutine32
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine32:
+   \   00000000   9105               LPM     R16, Z+
+   \   00000002   9115               LPM     R17, Z+
+   \   00000004   9125               LPM     R18, Z+
+   \   00000006   9134               LPM     R19, Z
+   \   00000008   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine3:
+   \   00000000   ....               RCALL   ?Subroutine27
+   \                     ??CrossCallReturnLabel_49:
+   \   00000002   2F50               MOV     R21, R16
+   \   00000004   01FD               MOVW    R31:R30, R27:R26
+   \   00000006   963F               ADIW    R31:R30, 15
+   \   00000008   ....               RCALL   ??Subroutine36_0
+   \                     ??CrossCallReturnLabel_76:
+   \   0000000A   1705               CP      R16, R21
+   \   0000000C   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine27:
+   \   00000000   E040               LDI     R20, 0
+   \   00000002   E050               LDI     R21, 0
+   \   00000004   E020               LDI     R18, 0
+   \   00000006   E030               LDI     R19, 0
+   \   00000008   018C               MOVW    R17:R16, R25:R24
+   \   0000000A   ....               RJMP    strtol
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine2:
+   \   00000000   ....               RCALL   ?Subroutine27
+   \                     ??CrossCallReturnLabel_48:
+   \   00000002   01B8               MOVW    R23:R22, R17:R16
+   \   00000004   01FD               MOVW    R31:R30, R27:R26
+   \   00000006   963F               ADIW    R31:R30, 15
+   \   00000008   ....               RCALL   ??Subroutine36_0
+   \                     ??CrossCallReturnLabel_75:
+   \   0000000A   1706               CP      R16, R22
+   \   0000000C   0717               CPC     R17, R23
+   \   0000000E   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine0:
+   \   00000000   018C               MOVW    R17:R16, R25:R24
+   \   00000002   ....               RCALL   atof
+   \   00000004   0108               MOVW    R1:R0, R17:R16
+   \   00000006   0119               MOVW    R3:R2, R19:R18
+   \   00000008   ....               RCALL   ?Subroutine25
+   \                     ??CrossCallReturnLabel_81:
+   \   0000000A   01A0               MOVW    R21:R20, R1:R0
+   \   0000000C   01B1               MOVW    R23:R22, R3:R2
+   \   0000000E   ....               RCALL   ?F_CMP_LT_L04
+   \   00000010   F410               BRCC    ??Subroutine0_0
+   \   00000012   0108               MOVW    R1:R0, R17:R16
+   \   00000014   0119               MOVW    R3:R2, R19:R18
+   \                     ??Subroutine0_0:
+   \   00000016   ....               RCALL   ?Subroutine33
+   \                     ??CrossCallReturnLabel_63:
+   \   00000018   ....               RCALL   ?Subroutine30
+   \                     ??CrossCallReturnLabel_60:
+   \   0000001A   0180               MOVW    R17:R16, R1:R0
+   \   0000001C   0191               MOVW    R19:R18, R3:R2
+   \   0000001E   ....               RCALL   ?F_CMP_LT_L04
+   \   00000020   F410               BRCC    ??Subroutine0_1
+   \   00000022   010A               MOVW    R1:R0, R21:R20
+   \   00000024   011B               MOVW    R3:R2, R23:R22
+   \                     ??Subroutine0_1:
+   \   00000026   01FD               MOVW    R31:R30, R27:R26
+   \   00000028   9634               ADIW    R31:R30, 4
+   \   0000002A   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine33:
+   \   00000000   01FD               MOVW    R31:R30, R27:R26
+   \   00000002   963B               ADIW    R31:R30, 11
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine30:
+   \   00000000   9145               LPM     R20, Z+
+   \   00000002   9155               LPM     R21, Z+
+   \   00000004   9165               LPM     R22, Z+
+   \   00000006   9174               LPM     R23, Z
+   \   00000008   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine12:
+   \   00000000   ....               RCALL   ?Subroutine32
+   \                     ??CrossCallReturnLabel_80:
+   \   00000002   ....               RJMP    ?F2UL_L04
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine22:
+   \   00000000   ....               RCALL   ?Subroutine33
+   \                     ??CrossCallReturnLabel_64:
+   \   00000002                      REQUIRE ??Subroutine36_0
+   \   00000002                      ;               // Fall through to label ??Subroutine36_0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ??Subroutine36_0:
+   \   00000000   ....               RCALL   ?Subroutine32
+   \                     ??CrossCallReturnLabel_82:
+   \   00000002   ....               RJMP    ?F2SL_L04
+    225          
+    226          // ==========================================================
+    227          //  Перезаписать в EEPROM установки по умолчанию. Если нет ошибки то возвращает 0
+    228          // ==========================================================
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    229          void Restore_default_settings(void)
+   \                     Restore_default_settings:
+    230          {
+   \   00000000   ....               RCALL   ?PROLOGUE5_L09
+   \   00000002                      REQUIRE ?Register_R4_is_cg_reg
+    231            unsigned int i;
+    232          
+    233            // Загрузить параметры значениями по умолчанию
+    234            for (i=0;i<get_params_num();i++)
+   \   00000002   E0A0               LDI     R26, 0
+   \   00000004   E0B0               LDI     R27, 0
+   \   00000006   E005               LDI     R16, 5
+   \   00000008   2E40               MOV     R4, R16
+    235            {
+    236              switch (dwvar[i].vartype)
+   \                     ??Restore_default_settings_0:
+   \   0000000A   018D               MOVW    R17:R16, R27:R26
+   \   0000000C   ....               RCALL   ?Subroutine6
+   \                     ??CrossCallReturnLabel_13:
+   \   0000000E   ....               LDI     R30, LOW(`?<Jumptable for Restore_default_settings>_0`)
+   \   00000010   ....               LDI     R31, (`?<Jumptable for Restore_default_settings>_0`) >> 8
+   \   00000012   ....               RJMP    ?CV_SWITCH_L06
+    237              {
+    238              case tunsigned_char:
+    239                *(unsigned char*)dwvar[i].val= (unsigned char)dwvar[i].defval; break;
+    240              case tsigned_char:
+    241                *(signed char*)dwvar[i].val= (signed char)dwvar[i].defval; break;
+   \                     ??Restore_default_settings_1:
+   \   00000014   ....               RCALL   ?Subroutine4
+   \                     ??CrossCallReturnLabel_8:
+   \   00000016   C014               RJMP    ??Restore_default_settings_2
+    242              case tunsigned_int:
+    243                *(unsigned int*)dwvar[i].val= (unsigned int)dwvar[i].defval; break;
+    244              case tsigned_int:
+    245                *(signed int*)dwvar[i].val= (signed int)dwvar[i].defval; break;
+   \                     ??Restore_default_settings_3:
+   \   00000018   ....               RCALL   ?Subroutine4
+   \                     ??CrossCallReturnLabel_9:
+   \   0000001A   8311               STD     Z+1, R17
+   \   0000001C   C011               RJMP    ??Restore_default_settings_2
+    246              case tunsigned_long:
+    247                *(unsigned long*)dwvar[i].val= (unsigned long)dwvar[i].defval; break;
+   \                     ??Restore_default_settings_4:
+   \   0000001E   ....               RCALL   ?Subroutine26
+   \                     ??CrossCallReturnLabel_44:
+   \   00000020   ....               RCALL   ?Subroutine12
+   \                     ??CrossCallReturnLabel_23:
+   \   00000022   C002               RJMP    ??CrossCallReturnLabel_74
+    248              case tsigned_long:
+    249                *(signed long*)dwvar[i].val=(signed long)dwvar[i].defval; break;
+   \                     ??Restore_default_settings_5:
+   \   00000024   ....               RCALL   ?Subroutine26
+   \                     ??CrossCallReturnLabel_45:
+   \   00000026   ....               RCALL   ??Subroutine36_0
+   \                     ??CrossCallReturnLabel_74:
+   \   00000028   2F40               MOV     R20, R16
+   \   0000002A   ....               RCALL   ?Subroutine16
+   \                     ??CrossCallReturnLabel_28:
+   \   0000002C   8311               STD     Z+1, R17
+   \   0000002E   8322               STD     Z+2, R18
+   \   00000030   8333               STD     Z+3, R19
+   \   00000032   C006               RJMP    ??Restore_default_settings_2
+    250              case tfloat:
+    251                *(float*)dwvar[i].val=dwvar[i].defval; break;
+    252              case tdouble:
+    253                *(double*)dwvar[i].val=dwvar[i].defval; break;
+   \                     ??Restore_default_settings_6:
+   \   00000034   ....               RCALL   ?Subroutine26
+   \                     ??CrossCallReturnLabel_46:
+   \   00000036   ....               RCALL   ?Subroutine30
+   \                     ??CrossCallReturnLabel_59:
+   \   00000038   ....               RCALL   ?Subroutine16
+   \                     ??CrossCallReturnLabel_29:
+   \   0000003A   8351               STD     Z+1, R21
+   \   0000003C   8362               STD     Z+2, R22
+   \   0000003E   8373               STD     Z+3, R23
+    254              }
+    255            }
+   \                     ??Restore_default_settings_2:
+   \   00000040   9611               ADIW    R27:R26, 1
+   \   00000042   944A               DEC     R4
+   \   00000044   F711               BRNE    ??Restore_default_settings_0
+    256          
+    257            // Выполнение инициализационных функций параметров
+    258            for (i=0;i<get_params_num();i++)
+   \   00000046   E0A0               LDI     R26, 0
+   \   00000048   E0B0               LDI     R27, 0
+   \   0000004A   E085               LDI     R24, 5
+   \                     ??Restore_default_settings_7:
+   \   0000004C   018D               MOVW    R17:R16, R27:R26
+   \   0000004E   ....               RCALL   ?Subroutine29
+   \                     ??CrossCallReturnLabel_57:
+   \   00000050   ....               LDI     R30, LOW(dwvar)
+   \   00000052   ....               LDI     R31, (dwvar) >> 8
+   \   00000054   0FE0               ADD     R30, R16
+   \   00000056   1FF1               ADC     R31, R17
+   \   00000058   9675               ADIW    R31:R30, 21
+   \   0000005A   9125               LPM     R18, Z+
+   \   0000005C   9134               LPM     R19, Z
+   \   0000005E   3020               CPI     R18, 0
+   \   00000060   0735               CPC     R19, R21
+   \   00000062   F011               BREQ    ??Restore_default_settings_8
+    259            {
+    260              if (dwvar[i].func!=0) dwvar[i].func();
+   \   00000064   01F9               MOVW    R31:R30, R19:R18
+   \   00000066   9509               ICALL
+    261            }
+   \                     ??Restore_default_settings_8:
+   \   00000068   9611               ADIW    R27:R26, 1
+   \   0000006A   958A               DEC     R24
+   \   0000006C   F779               BRNE    ??Restore_default_settings_7
+    262          
+    263            Save_Params_To_EEPROM();
+   \   0000006E   ....               RCALL   Save_Params_To_EEPROM
+    264          }
+   \   00000070   E0E5               LDI     R30, 5
+   \   00000072   ....               RJMP    ?EPILOGUE_B5_L09
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine16:
+   \   00000000   ....               RCALL   ?Subroutine31
+   \                     ??CrossCallReturnLabel_71:
+   \   00000002   8340               ST      Z, R20
+   \   00000004   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine4:
+   \   00000000   ....               RCALL   ?Subroutine26
+   \                     ??CrossCallReturnLabel_47:
+   \   00000002   ....               RCALL   ??Subroutine36_0
+   \                     ??CrossCallReturnLabel_77:
+   \   00000004   2F20               MOV     R18, R16
+   \   00000006   ....               RCALL   ?Subroutine31
+   \                     ??CrossCallReturnLabel_70:
+   \   00000008   8320               ST      Z, R18
+   \   0000000A   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine26:
+   \   00000000   01FC               MOVW    R31:R30, R25:R24
+   \   00000002   9637               ADIW    R31:R30, 7
+   \   00000004   9508               RET
+    265          // ==========================================================
+    266          //  Сохранить всю область рабочих параметров в EEPROM
+    267          // ==========================================================
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    268          void Save_Params_To_EEPROM(void)
+   \                     Save_Params_To_EEPROM:
+    269          {
+    270            wp.version = PRG_VERSION;
+   \   00000000   ....               LDI     R30, LOW(wp)
+   \   00000002   ....               LDI     R31, (wp) >> 8
+   \   00000004   E607               LDI     R16, 103
+   \   00000006   E010               LDI     R17, 0
+   \   00000008   8300               ST      Z, R16
+   \   0000000A   8311               STD     Z+1, R17
+    271            ee_wp      = wp;
+   \   0000000C   ....               RCALL   ?Subroutine21
+   \                     ??CrossCallReturnLabel_37:
+   \   0000000E   ....               RCALL   ?ML_SRAM_EEPROM_16_16_L07
+    272            ee_crc     = GetBlockCRC((unsigned char*)&wp,sizeof(wp));
+   \   00000010   ....               RCALL   ?Subroutine8
+   \                     ??CrossCallReturnLabel_17:
+   \   00000012   ....               LDI     R20, LOW(ee_crc)
+   \   00000014   ....               LDI     R21, (ee_crc) >> 8
+   \   00000016   ....               RJMP    __eeput16_16
+    273          
+    274          }
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine21:
+   \   00000000   ....               LDI     R20, LOW((ee_crc + 2))
+   \   00000002   ....               LDI     R21, HIGH((ee_crc + 2))
+   \   00000004   E01D               LDI     R17, 13
+   \   00000006   E020               LDI     R18, 0
+   \   00000008   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine8:
+   \   00000000   E04D               LDI     R20, 13
+   \   00000002   E050               LDI     R21, 0
+   \   00000004   E060               LDI     R22, 0
+   \   00000006   E070               LDI     R23, 0
+   \   00000008   ....               LDI     R16, LOW(wp)
+   \   0000000A   ....               LDI     R17, (wp) >> 8
+   \   0000000C   ....               RJMP    GetBlockCRC
+    275          
+    276          
+    277          // ==========================================================
+    278          //  Восстановить область рабочих параметров из EEPROM
+    279          // ==========================================================
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    280          unsigned char Restore_settings_from_eeprom(void)
+   \                     Restore_settings_from_eeprom:
+    281          {
+    282            wp = ee_wp;
+   \   00000000   ....               LDI     R30, LOW(wp)
+   \   00000002   ....               LDI     R31, (wp) >> 8
+   \   00000004   ....               RCALL   ?Subroutine21
+   \                     ??CrossCallReturnLabel_38:
+   \   00000006   ....               RCALL   ?ML_EEPROM_SRAM_16_16_L07
+    283            if (ee_crc != GetBlockCRC((unsigned char*)&wp,sizeof(wp)))
+   \   00000008   ....               RCALL   ?Subroutine8
+   \                     ??CrossCallReturnLabel_16:
+   \   0000000A   0198               MOVW    R19:R18, R17:R16
+   \   0000000C   ....               LDI     R20, LOW(ee_crc)
+   \   0000000E   ....               LDI     R21, (ee_crc) >> 8
+   \   00000010   ....               RCALL   __eeget16_16
+   \   00000012   1702               CP      R16, R18
+   \   00000014   0713               CPC     R17, R19
+   \   00000016   F011               BREQ    ??Restore_settings_from_eeprom_0
+    284              return 0;
+   \   00000018   E000               LDI     R16, 0
+   \   0000001A   9508               RET
+    285            else
+    286              return 1;
+   \                     ??Restore_settings_from_eeprom_0:
+   \   0000001C   E001               LDI     R16, 1
+   \   0000001E   9508               RET
+    287          }
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "SFLAGS">>`:
+   \   00000000   4653414C5347       DC8 "SFLAGS"
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "PREAMB">>`:
+   \   00000000   52504145424D       DC8 "PREAMB"
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "BTRATE">>`:
+   \   00000000   544241524554       DC8 "BTRATE"
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "KEYCOD">>`:
+   \   00000000   454B4359444F       DC8 "KEYCOD"
+   \              00          
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "DEVADR">>`:
+   \   00000000   454441565244       DC8 "DEVADR"
+   \              00          
+
+   \                                 In  segment SWITCH, align 2, keep-with-next
+   \                     `?<Jumptable for Str_to_param>_0`:
+   \   00000000   00                 DB      0
+   \   00000001   00                 DB      0
+   \   00000002   ....               DW      (??Str_to_param_6) /2
+   \   00000004   0008               DW      8
+   \   00000006   ....               DW      (??Str_to_param_0) /2
+   \   00000008   ....               DW      (??Str_to_param_4) /2
+   \   0000000A   ....               DW      (??Str_to_param_7) /2
+   \   0000000C   ....               DW      (??Str_to_param_11) /2
+   \   0000000E   ....               DW      (??Str_to_param_13) /2
+   \   00000010   ....               DW      (??Str_to_param_15) /2
+   \   00000012   ....               DW      (??Str_to_param_16) /2
+   \   00000014   ....               DW      (??Str_to_param_17) /2
+
+   \                                 In  segment SWITCH, align 2, keep-with-next
+   \                     `?<Jumptable for Restore_default_settings>_0`:
+   \   00000000   00                 DB      0
+   \   00000001   00                 DB      0
+   \   00000002   ....               DW      (??Restore_default_settings_2) /2
+   \   00000004   0008               DW      8
+   \   00000006   ....               DW      (??Restore_default_settings_1) /2
+   \   00000008   ....               DW      (??Restore_default_settings_1) /2
+   \   0000000A   ....               DW      (??Restore_default_settings_3) /2
+   \   0000000C   ....               DW      (??Restore_default_settings_3) /2
+   \   0000000E   ....               DW      (??Restore_default_settings_4) /2
+   \   00000010   ....               DW      (??Restore_default_settings_5) /2
+   \   00000012   ....               DW      (??Restore_default_settings_6) /2
+   \   00000014   ....               DW      (??Restore_default_settings_6) /2
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "SFLAGS">`:
+   \   00000000                      DS8 7
+   \   00000007                      REQUIRE `?<Initializer for <Constant "SFLAGS">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "PREAMB">`:
+   \   00000000                      DS8 7
+   \   00000007                      REQUIRE `?<Initializer for <Constant "PREAMB">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "BTRATE">`:
+   \   00000000                      DS8 7
+   \   00000007                      REQUIRE `?<Initializer for <Constant "BTRATE">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "KEYCOD">`:
+   \   00000000                      DS8 7
+   \   00000007                      REQUIRE `?<Initializer for <Constant "KEYCOD">>`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "DEVADR">`:
+   \   00000000                      DS8 7
+   \   00000007                      REQUIRE `?<Initializer for <Constant "DEVADR">>`
+    288          
+
+   Maximum stack usage in bytes:
+
+   CSTACK RSTACK Function
+   ------ ------ --------
+      4      2   Param_to_str
+        4      2   -> hex_to_ascii
+        4      4   -> hex_to_ascii
+        4      6   -> hex_to_ascii
+        4      2 ?SS_SHR_L02
+        4      4 ?S_EC_MUL_L02
+        4      2 ?UL_SHR_L03
+        4      2 ?US_SHR_L02
+      5      2   Restore_default_settings
+        5      2   -- Indirect call
+        5      2   -> Save_Params_To_EEPROM
+        5      2 ?CV_SWITCH_L06
+        5      2 ?F2SL_L04
+        5      4 ?F2SL_L04
+        5      2 ?F2UL_L04
+        5      2 ?S_EC_MUL_L02
+        5      4 ?S_EC_MUL_L02
+      0      2   Restore_settings_from_eeprom
+        0      2   -> GetBlockCRC
+        0      2 ?ML_EEPROM_SRAM_16_16_L07
+        0      2 __eeget16_16
+      0      2   Save_Params_To_EEPROM
+        0      2   -> GetBlockCRC
+        0      2 ?ML_SRAM_EEPROM_16_16_L07
+        0      2 __eeput16_16
+      8      2   Str_to_param
+        8      4   -> atof
+        8      4   -> strtol
+        8      2 ?CV_SWITCH_L06
+        8      2 ?F2SL_L04
+        8      4 ?F2SL_L04
+        8      2 ?F2UL_L04
+        8      4 ?F_CMP_LT_L04
+        8      2 ?S_EC_MUL_L02
+      0      2   get_params_name
+        0      2 ?S_EC_MUL_L02
+      0      2   get_params_num
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       7  ?<Constant "BTRATE">
+       7  ?<Constant "DEVADR">
+       7  ?<Constant "KEYCOD">
+       7  ?<Constant "PREAMB">
+       7  ?<Constant "SFLAGS">
+       7  ?<Initializer for <Constant "BTRATE">>
+       7  ?<Initializer for <Constant "DEVADR">>
+       7  ?<Initializer for <Constant "KEYCOD">>
+       7  ?<Initializer for <Constant "PREAMB">>
+       7  ?<Initializer for <Constant "SFLAGS">>
+      22  ?<Jumptable for Restore_default_settings>_0
+      22  ?<Jumptable for Str_to_param>_0
+       4  ??Subroutine34_0
+       8  ??Subroutine35_0
+       4  ??Subroutine36_0
+      44  ?Subroutine0
+      12  ?Subroutine1
+       6  ?Subroutine11
+       4  ?Subroutine12
+       6  ?Subroutine14
+       6  ?Subroutine15
+       6  ?Subroutine16
+       4  ?Subroutine17
+       8  ?Subroutine18
+      10  ?Subroutine19
+      16  ?Subroutine2
+      10  ?Subroutine20
+      10  ?Subroutine21
+       2  ?Subroutine22
+      12  ?Subroutine23
+       2  ?Subroutine24
+       4  ?Subroutine25
+       6  ?Subroutine26
+      12  ?Subroutine27
+       6  ?Subroutine28
+       6  ?Subroutine29
+      14  ?Subroutine3
+      10  ?Subroutine30
+       4  ?Subroutine31
+      10  ?Subroutine32
+       6  ?Subroutine33
+      12  ?Subroutine4
+       6  ?Subroutine5
+      18  ?Subroutine6
+       8  ?Subroutine7
+      14  ?Subroutine8
+       8  ?Subroutine9
+     118  Param_to_str
+     116  Restore_default_settings
+      32  Restore_settings_from_eeprom
+      24  Save_Params_To_EEPROM
+     184  Str_to_param
+     120  dwvar
+      15  ee_crc
+          ee_wp
+      16  get_params_name
+       6  get_params_num
+      13  wp
+       6  -- Other
+
+ 
+ 814 bytes in segment CODE
+  15 bytes in segment EEPROM_N
+   6 bytes in segment INITTAB
+ 120 bytes in segment NEAR_F
+  35 bytes in segment NEAR_I
+  35 bytes in segment NEAR_ID
+  13 bytes in segment NEAR_N
+  44 bytes in segment SWITCH
+ 
+ 1 013 bytes of CODE  memory (+ 6 bytes shared)
+    48 bytes of DATA  memory
+    15 bytes of XDATA memory
+
+Errors: none
+Warnings: none

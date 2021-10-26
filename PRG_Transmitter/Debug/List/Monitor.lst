@@ -1,0 +1,791 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  17:01:07
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Monitor.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW92EA.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Monitor.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        --initializers_in_flash --no_cross_call --no_clustering --no_tbaa
+#        --debug -DENABLE_BIT_DEFINITIONS -e --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List\Monitor.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj\Monitor.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Monitor.c
+      1          #include <iom8.h>
+
+   \                                 In  segment ABSOLUTE, at 0x59
+   \   union <unnamed> volatile __io _A_TIMSK
+   \                     _A_TIMSK:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x58
+   \   union <unnamed> volatile __io _A_TIFR
+   \                     _A_TIFR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x53
+   \   union <unnamed> volatile __io _A_TCCR0
+   \                     _A_TCCR0:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x38
+   \   union <unnamed> volatile __io _A_PORTB
+   \                     _A_PORTB:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x32
+   \   union <unnamed> volatile __io _A_PORTD
+   \                     _A_PORTD:
+   \   00000000                      DS8 1
+      2          #include <ina90.h>
+      3          #include <string.h>
+      4          #include <pgmspace.h>
+      5          #include <stdio.h>
+      6          #include <stdlib.h>
+      7          #include <ctype.h>
+      8          #include "main.h"
+      9          #include "USART.h"
+     10          #include "Monitor.h"
+     11          #include "wrk_params.h"
+     12          #include "DS1Wire.h"
+     13          #include "ADC.h"
+     14          #include "Timers.h"
+     15          #include "RF_settings.h"
+     16          #include "RF_transmitter.h"
+     17          #include "Util.h"
+     18          
+     19          extern __no_init D1W_device devices[MAX_DEVICES];
+     20          
+     21          #define  MONIT_OFF_TIMEOUT 65535
+     22          #define  LED_BLINK_TIMEOUT 100
+     23          
+     24          #define INBUF_LEN 30
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     25          char strbuf[INBUF_LEN];
+   \                     strbuf:
+   \   00000000                      DS8 30
+     26          
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     27          volatile unsigned int monit_off_tim; // Число тиков до выключения монитора
+   \                     monit_off_tim:
+   \   00000000                      DS8 2
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     28          unsigned char         led_blink_tim;
+   \                     led_blink_tim:
+   \   00000000                      DS8 1
+     29          
+     30          unsigned char exec_cmd(void);
+     31          
+     32          /*--------------------------------------------------------------------------------------
+     33            Процедура работы через последовательный интерфейс
+     34            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     35          void terminal(void)
+   \                     terminal:
+     36          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+     37            char ch;
+     38            unsigned char k = 0;
+   \   00000002   E080               LDI     R24, 0
+     39          
+     40            PORTD |= P_TXD;
+   \   00000004   9A91               SBI     0x12, 0x01
+     41            // Инициализируем прерывания от таймера 0, для обслуживания всяких временных интервалов	
+     42            // Частоту следования прерываний выбираем (16 000 000/64)/256 = 976,5625 Гц -> 0.001024 мс
+     43            TCCR0  = b00000011; // Предделитель = 64
+   \   00000006   E003               LDI     R16, 3
+   \   00000008   BF03               OUT     0x33, R16
+     44            TIFR  |= b00000001; //
+   \   0000000A   B708               IN      R16, 0x38
+   \   0000000C   6001               ORI     R16, 0x01
+   \   0000000E   BF08               OUT     0x38, R16
+     45            TIMSK |= b00000001; // Разрешаем прерывания
+   \   00000010   B709               IN      R16, 0x39
+   \   00000012   6001               ORI     R16, 0x01
+   \   00000014   BF09               OUT     0x39, R16
+     46          
+     47            monit_off_tim = 0; // Монтор выключиться спустя приблизительно минуту после последнего принятого символа
+   \   00000016   ....               LDI     R30, LOW(monit_off_tim)
+   \   00000018   ....               LDI     R31, (monit_off_tim) >> 8
+   \   0000001A   8380               ST      Z, R24
+   \   0000001C   8381               STD     Z+1, R24
+     48            led_blink_tim = 0;
+   \   0000001E   9380....           STS     led_blink_tim, R24
+     49          
+     50            do
+     51            {
+     52              if (DataInReceiveBuffer())
+   \                     ??terminal_0:
+   \   00000022   ....               RCALL   DataInReceiveBuffer
+   \   00000024   2300               TST     R16
+   \   00000026   F149               BREQ    ??terminal_1
+     53              {
+     54                unsigned char res;
+     55                monit_off_tim = 0;
+   \   00000028   ....               LDI     R30, LOW(monit_off_tim)
+   \   0000002A   ....               LDI     R31, (monit_off_tim) >> 8
+   \   0000002C   E000               LDI     R16, 0
+   \   0000002E   8300               ST      Z, R16
+   \   00000030   8301               STD     Z+1, R16
+     56                ch = USART_Receive();
+   \   00000032   ....               RCALL   USART_Receive
+   \   00000034   2F90               MOV     R25, R16
+     57                if (ch=='\r')
+   \   00000036   300D               CPI     R16, 13
+   \   00000038   F469               BRNE    ??terminal_2
+     58                {
+     59                  crlf();
+   \   0000003A   ....               RCALL   crlf
+     60                  USART_Transmit(' ');
+   \   0000003C   E200               LDI     R16, 32
+   \   0000003E   ....               RCALL   USART_Transmit
+     61                  res = exec_cmd();
+   \   00000040   ....               RCALL   exec_cmd
+   \   00000042   2F80               MOV     R24, R16
+     62                  crlf();
+   \   00000044   ....               RCALL   crlf
+     63                  if (res==0)
+   \   00000046   2388               TST     R24
+   \   00000048   F411               BRNE    ??terminal_3
+     64                  {
+     65                    wait_until_tx_complete();
+   \   0000004A   ....               RCALL   wait_until_tx_complete
+     66                    break;
+   \   0000004C   C01D               RJMP    ??terminal_4
+     67                  }
+     68                  USART_Transmit('>');
+   \                     ??terminal_3:
+   \   0000004E   E30E               LDI     R16, 62
+   \   00000050   ....               RCALL   USART_Transmit
+     69                  k = 0;
+   \   00000052   C012               RJMP    ??terminal_5
+     70                }
+     71                else
+     72                {
+     73                  // Отправить эхо
+     74                  USART_Transmit(ch);
+   \                     ??terminal_2:
+   \   00000054   ....               RCALL   USART_Transmit
+     75                  strbuf[k] = ch;
+   \   00000056   E0F0               LDI     R31, 0
+   \   00000058   2FE8               MOV     R30, R24
+   \   0000005A   ....               SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+   \   0000005C   ....               SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+   \   0000005E   8390               ST      Z, R25
+     76                  k++;
+     77                  strbuf[k] = 0;
+   \   00000060   9583               INC     R24
+   \   00000062   E0F0               LDI     R31, 0
+   \   00000064   2FE8               MOV     R30, R24
+   \   00000066   ....               SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+   \   00000068   ....               SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+   \   0000006A   E000               LDI     R16, 0
+   \   0000006C   8300               ST      Z, R16
+     78                  if (k == (INBUF_LEN-1))
+   \   0000006E   318D               CPI     R24, 29
+   \   00000070   F421               BRNE    ??terminal_1
+     79                  {
+     80                    USART_sendstr("\n\rIn buf. overflow!\n\r>");
+   \   00000072   ....               LDI     R16, LOW(`?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`)
+   \   00000074   ....               LDI     R17, (`?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`) >> 8
+   \   00000076   ....               RCALL   USART_sendstr
+     81                    k = 0;
+   \                     ??terminal_5:
+   \   00000078   E080               LDI     R24, 0
+     82                  }
+     83                }
+     84              }
+     85          
+     86            }
+     87            while (monit_off_tim < MONIT_OFF_TIMEOUT);
+   \                     ??terminal_1:
+   \   0000007A   ....               LDI     R30, LOW(monit_off_tim)
+   \   0000007C   ....               LDI     R31, (monit_off_tim) >> 8
+   \   0000007E   81A0               LD      R26, Z
+   \   00000080   81B1               LDD     R27, Z+1
+   \   00000082   3FAF               CPI     R26, 255
+   \   00000084   4FBF               SBCI    R27, 255
+   \   00000086   F669               BRNE    ??terminal_0
+     88          
+     89          
+     90            // Выход из монитора
+     91            PORTB |= P_LED;     // Гасим светодиод
+   \                     ??terminal_4:
+   \   00000088   9AC1               SBI     0x18, 0x01
+     92            TIMSK &= b11111110; // Запрещаем прерывания от таймера 0
+   \   0000008A   B709               IN      R16, 0x39
+   \   0000008C   7F0E               ANDI    R16, 0xFE
+   \   0000008E   BF09               OUT     0x39, R16
+     93            TCCR0  = 0;
+   \   00000090   E000               LDI     R16, 0
+   \   00000092   BF03               OUT     0x33, R16
+     94          }
+   \   00000094   E0E4               LDI     R30, 4
+   \   00000096   ....               RJMP    ?EPILOGUE_B4_L09
+   \   00000098                      REQUIRE _A_PORTD
+   \   00000098                      REQUIRE _A_TCCR0
+   \   00000098                      REQUIRE _A_TIFR
+   \   00000098                      REQUIRE _A_TIMSK
+   \   00000098                      REQUIRE _A_PORTB
+     95          	
+     96          
+     97          /*--------------------------------------------------------------------------------------
+     98             Выполнение поступившей команды
+     99            --------------------------------------------------------------------------------------*/
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    100          unsigned char exec_cmd(void)
+   \                     exec_cmd:
+    101          {
+   \   00000000   ....               RCALL   ?PROLOGUE5_L09
+   \   00000002                      REQUIRE ?Register_R4_is_cg_reg
+    102            unsigned char i,j,k;
+    103            char* cname;
+    104            char ch;
+    105          
+    106            i=0;
+   \   00000002   E0A0               LDI     R26, 0
+   \   00000004   C001               RJMP    ??exec_cmd_0
+    107          
+    108            while (isalnum(strbuf[i])!=0) i++;
+   \                     ??exec_cmd_1:
+   \   00000006   95A3               INC     R26
+   \                     ??exec_cmd_0:
+   \   00000008   E0B0               LDI     R27, 0
+   \   0000000A   ....               LDI     R16, LOW(strbuf)
+   \   0000000C   ....               LDI     R17, (strbuf) >> 8
+   \   0000000E   0F0A               ADD     R16, R26
+   \   00000010   1F1B               ADC     R17, R27
+   \   00000012   01F8               MOVW    R31:R30, R17:R16
+   \   00000014   81B0               LD      R27, Z
+   \   00000016   2FEB               MOV     R30, R27
+   \   00000018   E0F0               LDI     R31, 0
+   \   0000001A   ....               SUBI    R30, LOW((-(_Small_Ctype + 1) & 0xFFFF))
+   \   0000001C   ....               SBCI    R31, HIGH((-(_Small_Ctype + 1) & 0xFFFF))
+   \   0000001E   9124               LPM     R18, Z
+   \   00000020   7027               ANDI    R18, 0x07
+   \   00000022   F789               BRNE    ??exec_cmd_1
+    109          
+    110            k = i;
+    111            ch = strbuf[k];
+    112            strbuf[k] = 0;  // Обозначим конец строки имени параметра
+   \   00000024   01F8               MOVW    R31:R30, R17:R16
+   \   00000026   E000               LDI     R16, 0
+   \   00000028   8300               ST      Z, R16
+    113            k++;
+   \   0000002A   95A3               INC     R26
+   \   0000002C   2E4A               MOV     R4, R26
+    114          
+    115            // Искать параметр с заданным именем
+    116            for (i=0;i < get_params_num(); i++)
+   \   0000002E   E0A0               LDI     R26, 0
+   \   00000030   C001               RJMP    ??exec_cmd_2
+   \                     ??exec_cmd_3:
+   \   00000032   95A3               INC     R26
+   \                     ??exec_cmd_2:
+   \   00000034   E090               LDI     R25, 0
+   \   00000036   ....               RCALL   get_params_num
+   \   00000038   17A0               CP      R26, R16
+   \   0000003A   0791               CPC     R25, R17
+   \   0000003C   F54C               BRGE    ??exec_cmd_4
+    117            {
+    118              cname = get_params_name(i);
+   \   0000003E   2F0A               MOV     R16, R26
+   \   00000040   ....               RCALL   get_params_name
+    119              if (strcmp(strbuf, cname)==0)
+   \   00000042   0198               MOVW    R19:R18, R17:R16
+   \   00000044   ....               LDI     R16, LOW(strbuf)
+   \   00000046   ....               LDI     R17, (strbuf) >> 8
+   \   00000048   ....               RCALL   strcmp
+   \   0000004A   2B01               OR      R16, R17
+   \   0000004C   F791               BRNE    ??exec_cmd_3
+    120              {
+    121                // Найден параметр
+    122                if (ch=='=')
+   \   0000004E   33BD               CPI     R27, 61
+   \   00000050   F781               BRNE    ??exec_cmd_3
+    123                {
+    124                  j = k;
+   \   00000052   2D04               MOV     R16, R4
+   \   00000054   C001               RJMP    ??exec_cmd_5
+    125                  // Обнаружена команда записи, прочитать аргумент
+    126                  while (isalnum(strbuf[j])!=0) j++;
+   \                     ??exec_cmd_6:
+   \   00000056   9503               INC     R16
+   \                     ??exec_cmd_5:
+   \   00000058   E0F0               LDI     R31, 0
+   \   0000005A   2FE0               MOV     R30, R16
+   \   0000005C   ....               SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+   \   0000005E   ....               SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+   \   00000060   81E0               LD      R30, Z
+   \   00000062   E0F0               LDI     R31, 0
+   \   00000064   ....               SUBI    R30, LOW((-(_Small_Ctype + 1) & 0xFFFF))
+   \   00000066   ....               SBCI    R31, HIGH((-(_Small_Ctype + 1) & 0xFFFF))
+   \   00000068   9114               LPM     R17, Z
+   \   0000006A   7017               ANDI    R17, 0x07
+   \   0000006C   F7A1               BRNE    ??exec_cmd_6
+    127                  Str_to_param((unsigned char*)&strbuf[k],i);
+   \   0000006E   2F2A               MOV     R18, R26
+   \   00000070   E030               LDI     R19, 0
+   \   00000072   ....               LDI     R16, LOW(strbuf)
+   \   00000074   ....               LDI     R17, (strbuf) >> 8
+   \   00000076   0D04               ADD     R16, R4
+   \   00000078   1F13               ADC     R17, R19
+   \   0000007A   ....               RCALL   Str_to_param
+    128                  Param_to_str((unsigned char*)strbuf,i);
+   \   0000007C   2F2A               MOV     R18, R26
+   \   0000007E   E030               LDI     R19, 0
+   \   00000080   ....               LDI     R16, LOW(strbuf)
+   \   00000082   ....               LDI     R17, (strbuf) >> 8
+   \   00000084   ....               RCALL   Param_to_str
+    129                  USART_Transmit('=');
+   \   00000086   E30D               LDI     R16, 61
+   \   00000088   ....               RCALL   USART_Transmit
+    130                  USART_sendstr(strbuf);
+   \   0000008A   ....               LDI     R16, LOW(strbuf)
+   \   0000008C   ....               LDI     R17, (strbuf) >> 8
+   \   0000008E   C029               RJMP    ??exec_cmd_7
+    131                  return 1;
+    132                }
+    133          
+    134              }
+    135            }
+    136            // Если не нашли такой параметр, то проверить не запрос ли это всех параметров
+    137            if (ch=='?')
+   \                     ??exec_cmd_4:
+   \   00000090   33BF               CPI     R27, 63
+   \   00000092   F4B1               BRNE    ??exec_cmd_8
+    138            {
+    139              for (i=0;i < get_params_num(); i++)
+   \   00000094   E0A0               LDI     R26, 0
+   \                     ??exec_cmd_9:
+   \   00000096   ....               RCALL   get_params_num
+   \   00000098   17A0               CP      R26, R16
+   \   0000009A   0791               CPC     R25, R17
+   \   0000009C   F00C               BRLT    $+2+2
+   \   0000009E   C056               RJMP    ??exec_cmd_10
+    140              {
+    141                crlf();
+   \   000000A0   ....               RCALL   crlf
+    142                cname = get_params_name(i);
+   \   000000A2   2F0A               MOV     R16, R26
+   \   000000A4   ....               RCALL   get_params_name
+    143                USART_sendstr(cname);
+   \   000000A6   ....               RCALL   USART_sendstr
+    144                USART_Transmit('=');
+   \   000000A8   E30D               LDI     R16, 61
+   \   000000AA   ....               RCALL   USART_Transmit
+    145                Param_to_str((unsigned char*)strbuf,i);
+   \   000000AC   2F2A               MOV     R18, R26
+   \   000000AE   E030               LDI     R19, 0
+   \   000000B0   ....               LDI     R16, LOW(strbuf)
+   \   000000B2   ....               LDI     R17, (strbuf) >> 8
+   \   000000B4   ....               RCALL   Param_to_str
+    146                USART_sendstr(strbuf);
+   \   000000B6   ....               LDI     R16, LOW(strbuf)
+   \   000000B8   ....               LDI     R17, (strbuf) >> 8
+   \   000000BA   ....               RCALL   USART_sendstr
+    147              }
+   \   000000BC   95A3               INC     R26
+   \   000000BE   CFEB               RJMP    ??exec_cmd_9
+    148              return 1;
+    149            }
+    150          
+    151            if (ch=='+')  // Сохраним все параметры в EEPROM
+   \                     ??exec_cmd_8:
+   \   000000C0   32BB               CPI     R27, 43
+   \   000000C2   F421               BRNE    ??exec_cmd_11
+    152            {
+    153              Save_Params_To_EEPROM();
+   \   000000C4   ....               RCALL   Save_Params_To_EEPROM
+    154              USART_sendstr("All parameters saved!");
+   \   000000C6   ....               LDI     R16, LOW(`?<Constant "All parameters saved!">`)
+   \   000000C8   ....               LDI     R17, (`?<Constant "All parameters saved!">`) >> 8
+   \   000000CA   C00B               RJMP    ??exec_cmd_7
+    155              return 1;
+    156            }
+    157          
+    158            if (ch=='-')  // Восстановим параметры из EEPROM
+   \                     ??exec_cmd_11:
+   \   000000CC   32BD               CPI     R27, 45
+   \   000000CE   F421               BRNE    ??exec_cmd_12
+    159            {
+    160              Restore_settings_from_eeprom();
+   \   000000D0   ....               RCALL   Restore_settings_from_eeprom
+    161              USART_sendstr("Restored from EEPROM!");
+   \   000000D2   ....               LDI     R16, LOW(`?<Constant "Restored from EEPROM!">`)
+   \   000000D4   ....               LDI     R17, (`?<Constant "Restored from EEPROM!">`) >> 8
+   \   000000D6   C005               RJMP    ??exec_cmd_7
+    162              return 1;
+    163            }
+    164          
+    165            if (ch=='*')  // Восстановим параметры по умолчанию
+   \                     ??exec_cmd_12:
+   \   000000D8   32BA               CPI     R27, 42
+   \   000000DA   F429               BRNE    ??exec_cmd_13
+    166            {
+    167              Restore_default_settings();
+   \   000000DC   ....               RCALL   Restore_default_settings
+    168              USART_sendstr("Restored defaults!");
+   \   000000DE   ....               LDI     R16, LOW(`?<Constant "Restored defaults!">`)
+   \   000000E0   ....               LDI     R17, (`?<Constant "Restored defaults!">`) >> 8
+   \                     ??exec_cmd_7:
+   \   000000E2   ....               RCALL   USART_sendstr
+   \   000000E4   C033               RJMP    ??exec_cmd_10
+    169              return 1;
+    170            }
+    171          
+    172            if (ch=='.')  // Выйти из режима терминала
+   \                     ??exec_cmd_13:
+   \   000000E6   32BE               CPI     R27, 46
+   \   000000E8   F411               BRNE    ??exec_cmd_14
+    173            {
+    174              return 0;
+   \   000000EA   E000               LDI     R16, 0
+   \   000000EC   C030               RJMP    ??exec_cmd_15
+    175            }
+    176          
+    177            if (ch=='#')  // Показать номер устройства
+   \                     ??exec_cmd_14:
+   \   000000EE   32B3               CPI     R27, 35
+   \   000000F0   F459               BRNE    ??exec_cmd_16
+    178            {
+    179              ch = (char)get_pack_first_byte(0);
+   \   000000F2   E000               LDI     R16, 0
+   \   000000F4   ....               RCALL   get_pack_first_byte
+   \   000000F6   2FB0               MOV     R27, R16
+    180              USART_Transmit(hex_to_ascii(ch>>4));
+   \   000000F8   9502               SWAP    R16
+   \   000000FA   700F               ANDI    R16, 0x0F
+   \   000000FC   ....               RCALL   hex_to_ascii
+   \   000000FE   ....               RCALL   USART_Transmit
+    181              USART_Transmit(hex_to_ascii(ch));
+   \   00000100   2F0B               MOV     R16, R27
+   \   00000102   ....               RCALL   hex_to_ascii
+   \   00000104   ....               RCALL   USART_Transmit
+   \   00000106   C022               RJMP    ??exec_cmd_10
+    182              return 1;
+    183            }
+    184          
+    185            if (ch=='^')  // Показать результаты измерения АЦП
+   \                     ??exec_cmd_16:
+   \   00000108   35BE               CPI     R27, 94
+   \   0000010A   F501               BRNE    ??exec_cmd_10
+    186            {
+    187              unsigned int res;
+    188              ADC_init();
+   \   0000010C   ....               RCALL   ADC_init
+    189              ADC_get_select_ch(0); // Проведем одно пустое измерение
+   \   0000010E   E000               LDI     R16, 0
+   \   00000110   ....               RCALL   ADC_get_select_ch
+    190              crlf();
+   \   00000112   ....               RCALL   crlf
+    191              for (i=0;i<6;i++)
+   \   00000114   E0A0               LDI     R26, 0
+   \   00000116   E0B6               LDI     R27, 6
+    192              {
+    193                res = ADC_get_select_ch(i);  // Получим результат преобразования в канале
+   \                     ??exec_cmd_17:
+   \   00000118   2F0A               MOV     R16, R26
+   \   0000011A   ....               RCALL   ADC_get_select_ch
+   \   0000011C   01C8               MOVW    R25:R24, R17:R16
+    194                USART_Transmit(hex_to_ascii(res>>12));
+   \   0000011E   9516               LSR     R17
+   \   00000120   9516               LSR     R17
+   \   00000122   9516               LSR     R17
+   \   00000124   9516               LSR     R17
+   \   00000126   2F01               MOV     R16, R17
+   \   00000128   ....               RCALL   hex_to_ascii
+   \   0000012A   ....               RCALL   USART_Transmit
+    195                USART_Transmit(hex_to_ascii(res>>8));
+   \   0000012C   2F09               MOV     R16, R25
+   \   0000012E   ....               RCALL   hex_to_ascii
+   \   00000130   ....               RCALL   USART_Transmit
+    196                USART_Transmit(hex_to_ascii(res>>4));
+   \   00000132   E044               LDI     R20, 4
+   \   00000134   018C               MOVW    R17:R16, R25:R24
+   \   00000136   ....               RCALL   ?US_SHR_L02
+   \   00000138   ....               RCALL   hex_to_ascii
+   \   0000013A   ....               RCALL   USART_Transmit
+    197                USART_Transmit(hex_to_ascii(res));
+   \   0000013C   2F08               MOV     R16, R24
+   \   0000013E   ....               RCALL   hex_to_ascii
+   \   00000140   ....               RCALL   USART_Transmit
+    198                crlf();
+   \   00000142   ....               RCALL   crlf
+    199              }
+   \   00000144   95A3               INC     R26
+   \   00000146   95BA               DEC     R27
+   \   00000148   F739               BRNE    ??exec_cmd_17
+    200              ADC_switch_off();
+   \   0000014A   ....               RCALL   ADC_switch_off
+    201              return 1;
+    202            }
+    203          
+    204          /*
+    205            if (ch=='!')
+    206            {
+    207              unsigned int temperature;
+    208              for (i=0;i<MAX_DEVICES;i++)
+    209              {
+    210                if (devices[i].id[0] == DS1820_FAMILY_ID)
+    211                {
+    212                  temperature = DS1820_ReadTemperature(devices[i].id);
+    213                  sprintf((char*)strbuf,"%f",(float)temperature/2);
+    214                  strcat(strbuf,"\n\r");
+    215                  USART_sendstr(strbuf);
+    216                }
+    217          
+    218              }
+    219              return 1;
+    220            }
+    221          */
+    222          
+    223          
+    224          
+    225            return 1;
+   \                     ??exec_cmd_10:
+   \   0000014C   E001               LDI     R16, 1
+   \                     ??exec_cmd_15:
+   \   0000014E   E0E5               LDI     R30, 5
+   \   00000150   ....               RJMP    ?EPILOGUE_B5_L09
+    226          }
+    227          
+    228          
+    229          
+    230          
+    231          
+    232          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    233          void crlf(void)
+   \                     crlf:
+    234          {
+    235            USART_Transmit('\n');
+   \   00000000   E00A               LDI     R16, 10
+   \   00000002   ....               RCALL   USART_Transmit
+    236            USART_Transmit('\r');
+   \   00000004   E00D               LDI     R16, 13
+   \   00000006   ....               RJMP    USART_Transmit
+    237          }
+    238          
+    239          	
+    240          	
+    241          #pragma vector=TIMER0_OVF_vect
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    242          __interrupt void TIMER0_OVF_vect_interrupt( void )
+   \                     TIMER0_OVF_vect_interrupt:
+    243          {
+   \   00000000   93FA               ST      -Y, R31
+   \   00000002   93EA               ST      -Y, R30
+   \   00000004   933A               ST      -Y, R19
+   \   00000006   932A               ST      -Y, R18
+   \   00000008   931A               ST      -Y, R17
+   \   0000000A   930A               ST      -Y, R16
+   \   0000000C   B73F               IN      R19, 0x3F
+    244           __watchdog_reset(); // Не забываем сбрасывать WDT, поскольку в мониторе можем находиться очень долго
+   \   0000000E   95A8               WDR
+    245          
+    246           if (monit_off_tim < 65535) monit_off_tim++;
+   \   00000010   91E0....           LDS     R30, monit_off_tim
+   \   00000014   91F0....           LDS     R31, (monit_off_tim + 1)
+   \   00000018   3FEF               CPI     R30, 255
+   \   0000001A   4FFF               SBCI    R31, 255
+   \   0000001C   F041               BREQ    ??TIMER0_OVF_vect_interrupt_0
+   \   0000001E   ....               LDI     R30, LOW(monit_off_tim)
+   \   00000020   ....               LDI     R31, (monit_off_tim) >> 8
+   \   00000022   8100               LD      R16, Z
+   \   00000024   8111               LDD     R17, Z+1
+   \   00000026   5F0F               SUBI    R16, 255
+   \   00000028   4F1F               SBCI    R17, 255
+   \   0000002A   8300               ST      Z, R16
+   \   0000002C   8311               STD     Z+1, R17
+    247          
+    248           if (led_blink_tim == LED_BLINK_TIMEOUT)
+   \                     ??TIMER0_OVF_vect_interrupt_0:
+   \   0000002E   9100....           LDS     R16, led_blink_tim
+   \   00000032   3604               CPI     R16, 100
+   \   00000034   F431               BRNE    ??TIMER0_OVF_vect_interrupt_1
+    249           {
+    250           	 led_blink_tim = 0;
+   \   00000036   E000               LDI     R16, 0
+    251           	 PORTB ^= P_LED;
+   \   00000038   B328               IN      R18, 0x18
+   \   0000003A   E012               LDI     R17, 2
+   \   0000003C   2721               EOR     R18, R17
+   \   0000003E   BB28               OUT     0x18, R18
+   \   00000040   C001               RJMP    ??TIMER0_OVF_vect_interrupt_2
+    252           }
+    253           else
+    254           {
+    255           	 led_blink_tim++;
+   \                     ??TIMER0_OVF_vect_interrupt_1:
+   \   00000042   9503               INC     R16
+   \                     ??TIMER0_OVF_vect_interrupt_2:
+   \   00000044   9300....           STS     led_blink_tim, R16
+    256           }
+    257          }
+   \   00000048   BF3F               OUT     0x3F, R19
+   \   0000004A   9109               LD      R16, Y+
+   \   0000004C   9119               LD      R17, Y+
+   \   0000004E   9129               LD      R18, Y+
+   \   00000050   9139               LD      R19, Y+
+   \   00000052   91E9               LD      R30, Y+
+   \   00000054   91F9               LD      R31, Y+
+   \   00000056   9518               RETI
+   \   00000058                      REQUIRE _A_PORTB
+
+   \                                 In  segment INTVEC, offset 0x12, root
+   \                     `??TIMER0_OVF_vect_interrupt::??INTVEC 18`:
+   \   00000012   ....               RJMP    TIMER0_OVF_vect_interrupt
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "\\n\\rIn buf. overf`:
+   \   00000000   0D0A6E496220       DC8 "\012\015In buf. overflow!\012\015>"
+   \              6675202E766F
+   \              72656C66776F
+   \              0A213E0D00  
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "All parameters sa`:
+   \   00000000   6C41206C6170       DC8 "All parameters saved!"
+   \              6172656D6574
+   \              737273207661
+   \              64650021    
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "Restored from EEP`:
+   \   00000000   65527473726F       DC8 "Restored from EEPROM!"
+   \              646566206F72
+   \              206D45455250
+   \              4D4F0021    
+
+   \                                 In  segment NEAR_ID, align 1, keep-with-next
+   \                     `?<Initializer for <Constant "Restored defaults`:
+   \   00000000   65527473726F       DC8 "Restored defaults!"
+   \              646564206665
+   \              7561746C2173
+   \              00          
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`:
+   \   00000000                      DS8 23
+   \   00000017                      REQUIRE `?<Initializer for <Constant "\\n\\rIn buf. overf`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "All parameters saved!">`:
+   \   00000000                      DS8 22
+   \   00000016                      REQUIRE `?<Initializer for <Constant "All parameters sa`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "Restored from EEPROM!">`:
+   \   00000000                      DS8 22
+   \   00000016                      REQUIRE `?<Initializer for <Constant "Restored from EEP`
+
+   \                                 In  segment NEAR_I, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_I>`
+   \                     `?<Constant "Restored defaults!">`:
+   \   00000000                      DS8 19
+   \   00000013                      REQUIRE `?<Initializer for <Constant "Restored defaults`
+
+   Maximum stack usage in bytes:
+
+   CSTACK RSTACK Function
+   ------ ------ --------
+      6      2   TIMER0_OVF_vect_interrupt
+      0      2   crlf
+        0      2   -> USART_Transmit
+      5      2   exec_cmd
+        5      2   -> ADC_get_select_ch
+        5      2   -> ADC_init
+        5      2   -> ADC_switch_off
+        5      2   -> Param_to_str
+        5      2   -> Restore_default_settings
+        5      2   -> Restore_settings_from_eeprom
+        5      2   -> Save_Params_To_EEPROM
+        5      2   -> Str_to_param
+        5      2   -> USART_Transmit
+        5      2   -> USART_sendstr
+        5      2   -> crlf
+        5      2   -> get_pack_first_byte
+        5      2   -> get_params_name
+        5      2   -> get_params_num
+        5      2   -> hex_to_ascii
+        5      2   -> strcmp
+        5      2 ?US_SHR_L02
+      4      2   terminal
+        4      2   -> DataInReceiveBuffer
+        4      2   -> USART_Receive
+        4      2   -> USART_Transmit
+        4      2   -> USART_sendstr
+        4      2   -> crlf
+        4      2   -> exec_cmd
+        4      2   -> wait_until_tx_complete
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      22  ?<Constant "All parameters saved!">
+      19  ?<Constant "Restored defaults!">
+      22  ?<Constant "Restored from EEPROM!">
+      23  ?<Constant "\n\rIn buf. overflow!\n\r>">
+      22  ?<Initializer for <Constant "All parameters sa
+      19  ?<Initializer for <Constant "Restored defaults
+      22  ?<Initializer for <Constant "Restored from EEP
+      23  ?<Initializer for <Constant "\n\rIn buf. overf
+      88  TIMER0_OVF_vect_interrupt
+       2  TIMER0_OVF_vect_interrupt::??INTVEC 18
+       1  _A_PORTB
+       1  _A_PORTD
+       1  _A_TCCR0
+       1  _A_TIFR
+       1  _A_TIMSK
+       8  crlf
+     338  exec_cmd
+       1  led_blink_tim
+       2  monit_off_tim
+      30  strbuf
+     152  terminal
+      12  -- Other
+
+ 
+   5 bytes in segment ABSOLUTE
+ 586 bytes in segment CODE
+  12 bytes in segment INITTAB
+   2 bytes in segment INTVEC
+  86 bytes in segment NEAR_I
+  86 bytes in segment NEAR_ID
+  33 bytes in segment NEAR_Z
+ 
+ 672 bytes of CODE memory (+ 14 bytes shared)
+ 119 bytes of DATA memory (+  5 bytes shared)
+
+Errors: none
+Warnings: none

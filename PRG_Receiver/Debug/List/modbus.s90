@@ -1,0 +1,947 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR      26/Oct/2021  16:53:18
+// Copyright 1996-2021 IAR Systems AB.
+//
+//    Source file  =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\modbus.c
+//    Command line =  
+//        -f C:\Users\aly\AppData\Local\Temp\EW6869.tmp
+//        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\modbus.c
+//        --cpu=m8 -ms -o
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+//        -lCN
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        -lB
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+//        --eeprom_size 512 --clib -Ohz)
+//    Locale       =  Russian_RUS.1251
+//    List file    =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\modbus.s90
+//
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME modbus
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?EPILOGUE_B5_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?PROLOGUE5_L09
+        EXTERN ?Register_R4_is_cg_reg
+        EXTERN ?S_EC_MUL_L02
+        EXTERN ?need_segment_init
+
+        PUBWEAK `?<Segment init: NEAR_Z>`
+        PUBLIC Preset_EEPROM_reg
+        PUBLIC Preset_multiple_registers
+        PUBLIC Preset_single_register
+        PUBLIC Read_EEPROM_reg
+        PUBLIC Read_hld_reg
+        PUBLIC Read_reg_type
+        PUBLIC Send_exception_code
+        PUBLIC Send_read_response
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC ascii_mode_task
+        PUBLIC get_lrc
+        PUBLIC modb_timeout
+        PUBLIC modbus_cmd
+        PUBLIC modbus_task
+        PUBLIC reset_timeout
+
+        EXTERN Num_to_str
+        EXTERN Str_to_byte
+        EXTERN USART_Transmit
+        EXTERN USART_sendstr
+        EXTERN nodes_an_inputs
+        EXTERN nodes_temperatures
+        EXTERN strbuf
+        EXTERN wp
+
+// D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\modbus.c
+//    1 #include <iom8.h>
+//    2 #include <ina90.h>
+//    3 #include <string.h>
+//    4 #include <pgmspace.h>
+//    5 #include <stdio.h>
+//    6 #include "main.h"
+//    7 #include "USART.h"
+//    8 #include "Monitor.h"
+//    9 #include "Wrk_params.h"
+//   10 #include "Timers.h"
+//   11 #include "..\PRG_Transmitter\RF_settings.h"
+//   12 #include "RF_receiver.h"
+//   13 #include "Util.h"
+//   14 #include "bin_defines.h"
+//   15 #include "lcd.h"
+//   16 #include "rc4.h"
+//   17 #include "modbus.h"
+//   18 
+//   19 extern D1W_device    nodes_temperatures[MAX_NODES][MAX_DEVICES];
+//   20 extern unsigned int  nodes_an_inputs[MAX_NODES][MAX_AN_IN]; // Массив состояний аналоговых входов
+//   21 extern char strbuf[INBUF_LEN];
+//   22 extern __no_init TPARAMS wp;
+//   23 
+//   24 #define STATE_IDLE   0
+//   25 #define STATE_DATA   1
+//   26 #define STATE_END    2
+//   27 
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//   28 static   unsigned char  state=STATE_IDLE;
+//   29 volatile unsigned int   modb_timeout;
+modb_timeout:
+        DS8 2
+        DS8 2
+        DS8 1
+        DS8 1
+//   30 static   unsigned int   scnt; // Промежуточный счетчик поступающих байт
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+        DS8 1
+//   31 static   unsigned char  addr; // Адрес полученный из пакета
+//   32 static   unsigned char  fnum; // Номер функции полученный из пакета
+//   33 
+//   34 
+//   35 
+//   36 void ascii_mode_task(char ch);
+//   37 void Read_hld_reg(void);
+//   38 void Preset_single_register(void);
+//   39 void Preset_multiple_registers(void);
+//   40 void Read_EEPROM_reg(void);
+//   41 void Preset_EEPROM_reg(void);
+//   42 void Read_reg_type(void);
+//   43 void Send_read_response(unsigned char *pval,unsigned char nm);
+//   44 void Send_exception_code(unsigned char exceptc);
+//   45 unsigned char get_lrc(unsigned char *buf,unsigned int len);
+//   46 void reset_timeout(void);
+//   47 
+
+        RSEG NEAR_F:CODE:NOROOT(0)
+        DATA
+//   48 __flash TMODB_tcmd modbus_cmd[]=
+modbus_cmd:
+        DC8 3, 0
+        DC16 Read_hld_reg/2
+        DC8 6, 0
+        DC16 Preset_single_register/2
+        DC8 16, 1
+        DC16 Preset_multiple_registers/2
+        DC8 65, 0
+        DC16 Read_EEPROM_reg/2
+        DC8 66, 0
+        DC16 Preset_EEPROM_reg/2
+        DC8 67, 0
+        DC16 Read_reg_type/2
+//   49 {
+//   50   {
+//   51     3,   // чтение регистра хранения
+//   52     0,
+//   53     (void (*)(void)) Read_hld_reg
+//   54   },
+//   55   {
+//   56     6,   // запись регистра хранения
+//   57     0,
+//   58     (void (*)(void)) Preset_single_register
+//   59   },
+//   60   {
+//   61     16,   // запись n-регистров хранения
+//   62     1,
+//   63     (void (*)(void)) Preset_multiple_registers
+//   64   },
+//   65   {
+//   66     65,   // чтение регистра из EEPROM
+//   67     0,
+//   68     (void (*)(void)) Read_EEPROM_reg
+//   69   },
+//   70   {
+//   71     66,   // запись регистра в EEPROM
+//   72     0,
+//   73     (void (*)(void)) Preset_EEPROM_reg
+//   74   },
+//   75   {
+//   76     67,   // Чтение типа и длинны регистра хранения
+//   77     0,
+//   78     (void (*)(void)) Read_reg_type
+//   79   },
+//   80 
+//   81 };
+//   82 
+//   83 #define SIZE_CMD_ARR (sizeof(modbus_cmd)/sizeof(modbus_cmd[0]))
+//   84 // MODBUS exception codes
+//   85 #define ILLEGAL_FUNCTION      1
+//   86 #define ILLEGAL_DATA_ADDRESS  2
+//   87 #define ILLEGAL_DATA_VALUE    3
+//   88 #define SLAVE_DEVICES_FAILURE 4
+//   89 
+//   90 
+//   91 
+//   92 void modbus_task(char ch)
+//   93 {
+//   94   ascii_mode_task(ch);
+//   95 }
+//   96 
+//   97 
+//   98 /*--------------------------------------------------------------------------------------
+//   99    Обработчик MODBUS протокола в режиме ASCII
+//  100 
+//  101      +-----+------+------+------+-----+-----+
+//  102      ¦старт¦адрес ¦ ф-ия ¦данные¦ LRC ¦конец¦
+//  103      +-----+------+------+------+-----+-----+
+//  104      ¦1 сим¦2 сим ¦2 сим ¦n сим ¦2 сим¦2 сим¦
+//  105      ¦   : ¦      ¦      ¦      ¦     ¦CR LF¦
+//  106      +-----+------+------+------+-----+-----+
+//  107 
+//  108 Пример: :010301000003B8
+//  109 
+//  110         :010301000001BA 
+//  111 
+//  112         :010303000006B3 - прочитать 6-ть каналов АЦП с датчика 0 
+//  113 
+//  114   --------------------------------------------------------------------------------------*/
+//  115 void ascii_mode_task(char ch)
+//  116 {
+//  117   unsigned int  i;
+//  118   unsigned char lrc;
+//  119   
+//  120   
+//  121   if (modb_timeout == 0) state = STATE_IDLE;
+//  122 
+//  123   switch (state)
+//  124   {
+//  125   case STATE_IDLE:
+//  126     if (ch == ':')
+//  127     {
+//  128       reset_timeout();
+//  129       state = STATE_DATA;
+//  130       scnt = 0;
+//  131     }
+//  132     break;
+//  133   case STATE_DATA:
+//  134     reset_timeout();
+//  135     if (ch == 0x0D)
+//  136     {
+//  137       state = STATE_END;
+//  138       break;
+//  139     }
+//  140     strbuf[scnt] = ch;
+//  141     scnt++;
+//  142     if (scnt > INBUF_LEN)
+//  143     {
+//  144       state = STATE_IDLE;
+//  145       break;
+//  146     }
+//  147 
+//  148     break;
+//  149   case STATE_END:
+//  150     reset_timeout();
+//  151 
+//  152     if (ch == 0x0A)
+//  153     {
+//  154       strbuf[scnt] = 0;
+//  155       lrc = Str_to_byte((unsigned char *)&strbuf[scnt-2]);
+//  156       // Проверим контрольную сумму
+//  157       if (lrc!=get_lrc((unsigned char *)strbuf,scnt-2))
+//  158       {
+//  159         state = STATE_IDLE;
+//  160         break;
+//  161       }
+//  162       else
+//  163       {
+//  164         addr =  Str_to_byte((unsigned char *)&strbuf[0]); //Str_to_num((unsigned char *)strbuf, 16);
+//  165         // Проверим адрес
+//  166         if ((addr!=0) && (addr!=wp.devaddr))
+//  167         {
+//  168           state = STATE_IDLE;
+//  169           break;
+//  170         }
+//  171         else
+//  172         {
+//  173           // Проверим функцию
+//  174           fnum = Str_to_byte((unsigned char *)&strbuf[2]);
+//  175           for (i=0;i<SIZE_CMD_ARR;i++)
+//  176           {
+//  177             if  (modbus_cmd[i].id == fnum)
+//  178             {
+//  179               // Функция найдена выполняем
+//  180               modbus_cmd[i].func();
+//  181               state = STATE_IDLE;
+//  182               return;
+//  183             }
+//  184           }
+//  185           Send_exception_code(ILLEGAL_FUNCTION);
+//  186 
+//  187         }
+//  188       }
+//  189       state = STATE_IDLE;
+//  190       break;
+//  191     }
+//  192     state = STATE_IDLE;
+//  193 
+//  194 
+//  195     break;
+//  196 
+//  197 
+//  198   }
+//  199 
+//  200 
+//  201 }
+//  202 
+//  203 
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  204 unsigned char get_lrc(unsigned char *buf,unsigned int len)
+get_lrc:
+        CODE
+//  205 {
+//  206   unsigned char lrc = 0 ;
+        LDI     R20, 0
+        RJMP    ??get_lrc_0
+//  207   while (len--) lrc += *buf++ ;
+??get_lrc_1:
+        MOVW    R31:R30, R17:R16
+        LD      R21, Z+
+        MOVW    R17:R16, R31:R30
+        ADD     R20, R21
+??get_lrc_0:
+        MOVW    R23:R22, R19:R18
+        SUBI    R18, 1
+        SBCI    R19, 0
+        OR      R22, R23
+        BRNE    ??get_lrc_1
+//  208   return (unsigned char)(-lrc);
+        NEG     R20
+        MOV     R16, R20
+        RET
+//  209 }
+
+        RSEG `CODE`:CODE:NOROOT(1)
+Send_exception_code:
+        CODE
+        ST      -Y, R24
+        MOV     R24, R16
+        LDI     R16, 58
+        RCALL   USART_Transmit
+        LDI     R30, LOW(modb_timeout)
+        LDI     R31, (modb_timeout) >> 8
+        LDD     R16, Z+5
+        ORI     R16, 0x80
+        STD     Z+5, R16
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_1:
+        LDI     R18, 6
+        LDI     R19, 0
+        RCALL   ?Subroutine2
+??CrossCallReturnLabel_6:
+        LDI     R17, 16
+        ST      -Y, R17
+        MOV     R20, R16
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_2:
+        RCALL   Num_to_str
+        LDI     R30, LOW(strbuf)
+        LDI     R31, (strbuf) >> 8
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_7:
+        MOVW    R17:R16, R31:R30
+        RCALL   USART_sendstr
+        LD      R24, Y+
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+ascii_mode_task:
+        CODE
+        RCALL   ?PROLOGUE4_L09
+        MOV     R18, R16
+        LDI     R26, LOW(modb_timeout)
+        LDI     R27, (modb_timeout) >> 8
+        LD      R16, X+
+        LD      R17, X
+        SBIW    R27:R26, 1
+        OR      R16, R17
+        BRNE    ??ascii_mode_task_0
+        LDI     R16, 0
+        STS     (modb_timeout + 4), R16
+        RJMP    ??ascii_mode_task_1
+??ascii_mode_task_0:
+        MOVW    R31:R30, R27:R26
+        LDD     R20, Z+2
+        LDD     R21, Z+3
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_13:
+        ADD     R16, R20
+        ADC     R17, R21
+        LDD     R19, Z+4
+        TST     R19
+        BREQ    ??ascii_mode_task_1
+        DEC     R19
+        BREQ    ??ascii_mode_task_2
+        DEC     R19
+        BREQ    ??ascii_mode_task_3
+        RJMP    ??ascii_mode_task_4
+??ascii_mode_task_1:
+        CPI     R18, 58
+        BREQ    $+2+2
+        RJMP    ??ascii_mode_task_4
+        LDI     R16, 16
+        LDI     R17, 39
+        ST      X+, R16
+        ST      X, R17
+        SBIW    R27:R26, 1
+        LDI     R16, 1
+        STS     (modb_timeout + 4), R16
+        MOVW    R31:R30, R27:R26
+        LDI     R16, 0
+        STD     Z+2, R16
+        STD     Z+3, R16
+        RJMP    ??ascii_mode_task_4
+??ascii_mode_task_2:
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_9:
+        CPI     R18, 13
+        BRNE    ??ascii_mode_task_5
+        LDI     R16, 2
+        STD     Z+4, R16
+        RJMP    ??ascii_mode_task_4
+??ascii_mode_task_5:
+        MOVW    R31:R30, R17:R16
+        ST      Z, R18
+        MOVW    R31:R30, R27:R26
+        LDD     R16, Z+2
+        LDD     R17, Z+3
+        SUBI    R16, 255
+        SBCI    R17, 255
+        STD     Z+2, R16
+        STD     Z+3, R17
+        CPI     R16, 101
+        SBCI    R17, 0
+        BRCS    ??ascii_mode_task_4
+        RJMP    ??ascii_mode_task_6
+??ascii_mode_task_3:
+        RCALL   ?Subroutine4
+??CrossCallReturnLabel_10:
+        CPI     R18, 10
+        BRNE    ??ascii_mode_task_6
+        MOVW    R31:R30, R17:R16
+        LDI     R18, 0
+        ST      Z, R18
+        SUBI    R16, 2
+        SBCI    R17, 0
+        RCALL   Str_to_byte
+        MOV     R0, R16
+        MOVW    R31:R30, R27:R26
+        LDD     R18, Z+2
+        LDD     R19, Z+3
+        SUBI    R18, 2
+        SBCI    R19, 0
+        RCALL   ?Subroutine2
+??CrossCallReturnLabel_5:
+        CP      R0, R16
+        BRNE    ??ascii_mode_task_6
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_14:
+        RCALL   Str_to_byte
+        TST     R16
+        BREQ    ??ascii_mode_task_7
+        LDS     R17, (wp + 12)
+        CP      R16, R17
+        BRNE    ??ascii_mode_task_6
+??ascii_mode_task_7:
+        LDI     R16, LOW((strbuf + 2))
+        LDI     R17, HIGH((strbuf + 2))
+        RCALL   Str_to_byte
+        MOV     R17, R16
+        STS     (modb_timeout + 5), R16
+        LDI     R24, 0
+        LDI     R25, 0
+        LDI     R16, 6
+??ascii_mode_task_8:
+        MOVW    R19:R18, R25:R24
+        LSL     R18
+        ROL     R19
+        LSL     R18
+        ROL     R19
+        LDI     R30, LOW(modbus_cmd)
+        LDI     R31, (modbus_cmd) >> 8
+        ADD     R30, R18
+        ADC     R31, R19
+        LPM     R18, Z
+        CP      R18, R17
+        BRNE    ??ascii_mode_task_9
+        ADIW    R31:R30, 2
+        LPM     R16, Z+
+        LPM     R31, Z
+        MOV     R30, R16
+        ICALL
+        RJMP    ??ascii_mode_task_6
+??ascii_mode_task_9:
+        ADIW    R25:R24, 1
+        DEC     R16
+        BRNE    ??ascii_mode_task_8
+        LDI     R16, 1
+        RCALL   Send_exception_code
+??ascii_mode_task_6:
+        LDI     R16, 0
+        STS     (modb_timeout + 4), R16
+??ascii_mode_task_4:
+        REQUIRE ?Subroutine9
+        ;               // Fall through to label ?Subroutine9
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine9:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine4:
+        LDI     R20, 16
+        LDI     R21, 39
+        ST      X+, R20
+        ST      X, R21
+        SBIW    R27:R26, 1
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine2:
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_17:
+        RJMP    get_lrc
+
+        RSEG `CODE`:CODE:NOROOT(1)
+modbus_task:
+        CODE
+        RJMP    ascii_mode_task
+//  210 
+//  211 
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  212 void reset_timeout(void)
+reset_timeout:
+        CODE
+//  213 {
+//  214    modb_timeout = MODB_TIMEOUT;
+        LDI     R30, LOW(modb_timeout)
+        LDI     R31, (modb_timeout) >> 8
+        LDI     R16, 16
+        LDI     R17, 39
+        ST      Z, R16
+        STD     Z+1, R17
+//  215 }
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+Send_read_response:
+        CODE
+        RCALL   ?PROLOGUE4_L09
+        MOVW    R27:R26, R17:R16
+        MOV     R24, R18
+        LDI     R16, 58
+        RCALL   USART_Transmit
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_0:
+        LDI     R25, 0
+        RJMP    ??Send_read_response_0
+??Send_read_response_1:
+        LD      R20, X+
+        RCALL   ??Subroutine10_0
+??CrossCallReturnLabel_25:
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_3:
+        MUL     R25, R18
+        ADD     R16, R0
+        ADC     R17, R1
+        RCALL   Num_to_str
+        INC     R25
+??Send_read_response_0:
+        CP      R25, R24
+        BRCS    ??Send_read_response_1
+        MOV     R18, R24
+        LDI     R19, 0
+        SUBI    R18, 250
+        SBCI    R19, 255
+        RCALL   ?Subroutine2
+??CrossCallReturnLabel_4:
+        LDI     R17, 2
+        MUL     R24, R17
+        LDI     R26, LOW(strbuf)
+        LDI     R27, (strbuf) >> 8
+        ADD     R26, R0
+        ADC     R27, R1
+        LDI     R17, 16
+        ST      -Y, R17
+        MOV     R20, R16
+        RCALL   ?Subroutine8
+??CrossCallReturnLabel_18:
+        MOVW    R17:R16, R27:R26
+        SUBI    R16, 250
+        SBCI    R17, 255
+        RCALL   Num_to_str
+        MOVW    R31:R30, R27:R26
+        RCALL   ?Subroutine3
+??CrossCallReturnLabel_8:
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_15:
+        RCALL   USART_sendstr
+        RJMP    ?Subroutine9
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine6:
+        LDI     R16, LOW(strbuf)
+        LDI     R17, (strbuf) >> 8
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine3:
+        LDI     R16, 13
+        STD     Z+8, R16
+        LDI     R16, 10
+        STD     Z+9, R16
+        LDI     R16, 0
+        STD     Z+10, R16
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine1:
+        RCALL   ?Subroutine8
+??CrossCallReturnLabel_22:
+        LDI     R16, LOW((strbuf + 6))
+        LDI     R17, HIGH((strbuf + 6))
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine8:
+        LDI     R21, 0
+        LDI     R22, 0
+        LDI     R23, 0
+        LDI     R18, 2
+        LDI     R19, 0
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine0:
+        RCALL   ??Subroutine10_0
+??CrossCallReturnLabel_26:
+        LDS     R20, (wp + 12)
+        RCALL   ?Subroutine8
+??CrossCallReturnLabel_19:
+        RCALL   ?Subroutine6
+??CrossCallReturnLabel_16:
+        RCALL   ?Subroutine7
+??CrossCallReturnLabel_23:
+        LDS     R20, (modb_timeout + 5)
+        RCALL   ?Subroutine8
+??CrossCallReturnLabel_20:
+        LDI     R16, LOW((strbuf + 2))
+        LDI     R17, HIGH((strbuf + 2))
+        RCALL   ?Subroutine7
+??CrossCallReturnLabel_24:
+        MOV     R20, R24
+        RCALL   ?Subroutine8
+??CrossCallReturnLabel_21:
+        LDI     R16, LOW((strbuf + 4))
+        LDI     R17, HIGH((strbuf + 4))
+        RJMP    Num_to_str
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine7:
+        RCALL   Num_to_str
+        REQUIRE ??Subroutine10_0
+        ;               // Fall through to label ??Subroutine10_0
+
+        RSEG `CODE`:CODE:NOROOT(1)
+??Subroutine10_0:
+        LDI     R16, 16
+        ST      -Y, R16
+        RET
+//  216 
+//  217 
+//  218 
+//  219 
+//  220 
+//  221 
+//  222 /*--------------------------------------------------------------------------------------
+//  223   Чтение внутренних переменных из устройства
+//  224 
+//  225   Интерпретация поля данных
+//  226      +----------------+-------------------------+
+//  227      ¦стартовый адрес ¦ количество читаемых     |
+//  228      |                |  2-х байтных регистров  |
+//  229      +----------------+-------------------------+
+//  230      ¦   4 сим        ¦       4 сим             |
+//  231      ¦                ¦                         |
+//  232      +----------------+-------------------------+
+//  233 
+//  234 
+//  235      Интерпретация стартового адреса:
+//  236 
+//  237      Старший байт указывает тип данных: 1 - идентификаторы температурных датчиков
+//  238                                         2 - значения температуры с температурных датчиков
+//  239                                         3 - значения АЦП с удадленных датчиков
+//  240 
+//  241      Младший байт указывает индексы данных в двумерных массивах:
+//  242        Старший полубайт указывает номер удаленного узла (датчика)
+//  243        Младший полубайт указывает номер температурного датчика в узле или номер аналогового входа
+//  244   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  245 void Read_hld_reg(void)
+Read_hld_reg:
+        CODE
+//  246 {
+        RCALL   ?PROLOGUE5_L09
+        REQUIRE ?Register_R4_is_cg_reg
+//  247   unsigned int  nm;
+//  248   unsigned char type, dev, chan;
+//  249   unsigned char *pval;
+//  250 
+//  251   nm   = Str_to_byte((unsigned char *)&strbuf[10])*2; // Вычислим количество байт для передачи
+        LDI     R16, LOW((strbuf + 10))
+        LDI     R17, HIGH((strbuf + 10))
+        RCALL   Str_to_byte
+        LDI     R17, 2
+        MUL     R16, R17
+        MOV     R4, R0
+//  252 
+//  253 
+//  254   type =  Str_to_byte((unsigned char *)&strbuf[4]);
+        LDI     R16, LOW((strbuf + 4))
+        LDI     R17, HIGH((strbuf + 4))
+        RCALL   Str_to_byte
+        MOV     R27, R16
+//  255   dev  = (Str_to_byte((unsigned char *)&strbuf[6]) >> 4) & 0x000F;
+        RCALL   ?Subroutine5
+??CrossCallReturnLabel_12:
+        SWAP    R16
+        ANDI    R16, 0x0F
+        MOV     R26, R16
+//  256   chan =  Str_to_byte((unsigned char *)&strbuf[6]) & 0x000F;
+        RCALL   ?Subroutine5
+??CrossCallReturnLabel_11:
+        ANDI    R16, 0x0F
+        MOV     R18, R16
+//  257   switch (type)
+        MOV     R16, R26
+        LDI     R17, 0
+        LDI     R20, 40
+        LDI     R21, 0
+        RCALL   ?S_EC_MUL_L02
+        LDI     R22, LOW(nodes_temperatures)
+        LDI     R23, (nodes_temperatures) >> 8
+        ADD     R22, R16
+        ADC     R23, R17
+        MOV     R16, R18
+        LDI     R17, 0
+        LDI     R20, 10
+        RCALL   ?S_EC_MUL_L02
+        ADD     R22, R16
+        ADC     R23, R17
+        DEC     R27
+        BREQ    ??Read_hld_reg_0
+        DEC     R27
+        BREQ    ??Read_hld_reg_1
+        DEC     R27
+        BREQ    ??Read_hld_reg_2
+        RJMP    ??Read_hld_reg_3
+//  258   {
+//  259   case 1:
+//  260     if (dev  >= MAX_NODES)   return;
+??Read_hld_reg_0:
+        CPI     R26, 4
+        BRCC    ??Read_hld_reg_4
+//  261     if (chan >= MAX_DEVICES) return;
+        CPI     R18, 4
+        BRCC    ??Read_hld_reg_4
+//  262     pval = nodes_temperatures[dev][chan].id;
+        MOVW    R25:R24, R23:R22
+//  263     break;
+        RJMP    ??Read_hld_reg_3
+//  264   case 2:
+//  265     if (dev  >= MAX_NODES)   return;
+??Read_hld_reg_1:
+        CPI     R26, 4
+        BRCC    ??Read_hld_reg_4
+//  266     if (chan >= MAX_DEVICES) return;
+        CPI     R18, 4
+        BRCC    ??Read_hld_reg_4
+//  267     pval = (unsigned char*)&nodes_temperatures[dev][chan].temperature;
+        MOVW    R25:R24, R23:R22
+        ADIW    R25:R24, 8
+//  268     break;
+        RJMP    ??Read_hld_reg_3
+//  269   case 3:
+//  270     if (dev  >= MAX_NODES)   return;
+??Read_hld_reg_2:
+        CPI     R26, 4
+        BRCC    ??Read_hld_reg_4
+//  271     if (chan >= MAX_AN_IN)   return;
+        CPI     R18, 6
+        BRCC    ??Read_hld_reg_4
+//  272     pval = (unsigned char*)&nodes_an_inputs[dev][chan];
+        MOV     R16, R26
+        LDI     R17, 0
+        LDI     R20, 12
+        RCALL   ?S_EC_MUL_L02
+        LDI     R24, LOW(nodes_an_inputs)
+        LDI     R25, (nodes_an_inputs) >> 8
+        ADD     R24, R16
+        ADC     R25, R17
+        LDI     R16, 2
+        MUL     R18, R16
+        ADD     R24, R0
+        ADC     R25, R21
+//  273     break;
+//  274   }
+//  275 
+//  276   Send_read_response(pval,nm);
+??Read_hld_reg_3:
+        MOV     R18, R4
+        MOVW    R17:R16, R25:R24
+        RCALL   Send_read_response
+//  277 
+//  278 }
+??Read_hld_reg_4:
+        LDI     R30, 5
+        RJMP    ?EPILOGUE_B5_L09
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine5:
+        LDI     R16, LOW((strbuf + 6))
+        LDI     R17, HIGH((strbuf + 6))
+        RJMP    Str_to_byte
+//  279 
+//  280 
+//  281 
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  282 void Preset_single_register(void)
+Preset_single_register:
+        CODE
+//  283 {
+//  284 
+//  285 }
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  286 void Preset_multiple_registers(void)
+Preset_multiple_registers:
+        CODE
+//  287 {
+//  288 
+//  289 }
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  290 void Read_EEPROM_reg(void)
+Read_EEPROM_reg:
+        CODE
+//  291 {
+//  292 
+//  293 
+//  294 }
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  295 void Preset_EEPROM_reg(void)
+Preset_EEPROM_reg:
+        CODE
+//  296 {
+//  297 
+//  298 
+//  299 }
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//  300 void Read_reg_type(void)
+Read_reg_type:
+        CODE
+//  301 {
+//  302 
+//  303 }
+        RET
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01cH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01dH
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01eH
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EEARH:
+
+        RSEG INITTAB:CODE:NOROOT(0)
+        DATA
+`?<Segment init: NEAR_Z>`:
+        DC16    SFE(NEAR_Z) - SFB(NEAR_Z)
+        DC16    SFB(NEAR_Z)
+        DC16    0
+        REQUIRE ?need_segment_init
+
+        END
+//  304 
+//  305 
+//  306 /*--------------------------------------------------------------------------------------
+//  307   Передача пакета на запрос чтения
+//  308   --------------------------------------------------------------------------------------*/
+//  309 void Send_read_response(unsigned char *pval,unsigned char nm)
+//  310 {
+//  311   unsigned char lrc;
+//  312   unsigned char i;
+//  313   unsigned char b;
+//  314   USART_Transmit(':');
+//  315   Num_to_str((unsigned char *)strbuf,   2,wp.devaddr,16);
+//  316   Num_to_str((unsigned char *)&strbuf[2],2,fnum,16);
+//  317   Num_to_str((unsigned char *)&strbuf[4],2,nm,16);
+//  318   for (i=0;i<nm;i++)
+//  319   {
+//  320     b = *(pval++);
+//  321     Num_to_str((unsigned char *)&strbuf[6+i*2],2,b,16);
+//  322   }
+//  323   lrc = get_lrc((unsigned char *)strbuf,nm+6);
+//  324   Num_to_str((unsigned char *)&strbuf[6+nm*2],2,lrc,16);
+//  325   strbuf[8+nm*2]  = 0x0D;
+//  326   strbuf[9+nm*2]  = 0x0A;
+//  327   strbuf[10+nm*2] = 0;
+//  328   USART_sendstr(strbuf);
+//  329 }
+//  330 
+//  331 /*--------------------------------------------------------------------------------------
+//  332   Функци выдачи кода исключения
+//  333   --------------------------------------------------------------------------------------*/
+//  334 void Send_exception_code(unsigned char exceptc)
+//  335 {
+//  336   unsigned char lrc;
+//  337   USART_Transmit(':');
+//  338   fnum |=0x80;
+//  339 
+//  340   Num_to_str((unsigned char *)strbuf,   2,wp.devaddr,16);
+//  341   Num_to_str((unsigned char *)&strbuf[2],2,fnum,16);
+//  342   Num_to_str((unsigned char *)&strbuf[4],2,exceptc,16);
+//  343   lrc = get_lrc((unsigned char *)strbuf,6);
+//  344   Num_to_str((unsigned char *)&strbuf[6],2,lrc,16);
+//  345   strbuf[8]  = 0x0D;
+//  346   strbuf[9]  = 0x0A;
+//  347   strbuf[10] = 0;
+//  348   USART_sendstr(strbuf);
+//  349 }
+// 
+// 690 bytes in segment CODE
+//   6 bytes in segment INITTAB
+//  24 bytes in segment NEAR_F
+//   7 bytes in segment NEAR_Z
+// 
+// 714 bytes of CODE memory (+ 6 bytes shared)
+//   7 bytes of DATA memory
+//
+//Errors: none
+//Warnings: none

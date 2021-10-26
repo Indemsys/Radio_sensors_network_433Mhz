@@ -1,0 +1,528 @@
+///////////////////////////////////////////////////////////////////////////////
+//
+// IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR      26/Oct/2021  16:53:18
+// Copyright 1996-2021 IAR Systems AB.
+//
+//    Source file  =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Monitor.c
+//    Command line =  
+//        -f C:\Users\aly\AppData\Local\Temp\EW686A.tmp
+//        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Monitor.c
+//        --cpu=m8 -ms -o
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+//        -lCN
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        -lB
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+//        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+//        --eeprom_size 512 --clib -Ohz)
+//    Locale       =  Russian_RUS.1251
+//    List file    =  
+//        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\Monitor.s90
+//
+///////////////////////////////////////////////////////////////////////////////
+
+        NAME Monitor
+
+        RSEG CSTACK:DATA:NOROOT(0)
+        RSEG RSTACK:DATA:NOROOT(0)
+
+        EXTERN ?EPILOGUE_B4_L09
+        EXTERN ?EPILOGUE_B5_L09
+        EXTERN ?PROLOGUE4_L09
+        EXTERN ?PROLOGUE5_L09
+        EXTERN ?Register_R4_is_cg_reg
+        EXTERN ?need_segment_init
+
+        PUBWEAK `?<Segment init: NEAR_I>`
+        PUBWEAK `?<Segment init: NEAR_Z>`
+        PUBWEAK __?EEARH
+        PUBWEAK __?EEARL
+        PUBWEAK __?EECR
+        PUBWEAK __?EEDR
+        PUBLIC exec_cmd
+        PUBLIC strbuf
+        PUBLIC terminal
+
+        EXTERN DataInReceiveBuffer
+        EXTERN Param_to_str
+        EXTERN Restore_default_settings
+        EXTERN Restore_settings_from_eeprom
+        EXTERN Save_Params_To_EEPROM
+        EXTERN Str_to_param
+        EXTERN USART_Receive
+        EXTERN USART_Transmit
+        EXTERN USART_sendstr
+        EXTERN _Small_Ctype
+        EXTERN crlf
+        EXTERN get_params_name
+        EXTERN get_params_num
+        EXTERN strcmp
+
+// D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Monitor.c
+//    1 #include <iom8.h>
+//    2 #include <ina90.h>
+//    3 #include <string.h>
+//    4 #include <pgmspace.h>
+//    5 #include <stdio.h>
+//    6 #include <stdlib.h>
+//    7 #include <ctype.h>
+//    8 #include "main.h"
+//    9 #include "USART.h"
+//   10 #include "Monitor.h"
+//   11 #include "wrk_params.h"
+//   12 #include "Timers.h"
+//   13 #include "..\PRG_Transmitter\RF_settings.h"
+//   14 #include "RF_receiver.h"
+//   15 #include "Util.h"
+//   16 
+//   17 extern __no_init D1W_device devices[MAX_DEVICES];
+//   18 
+//   19 
+
+        RSEG NEAR_Z:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_Z>`
+//   20 char strbuf[INBUF_LEN];
+strbuf:
+        DS8 100
+
+        RSEG `CODE`:CODE:NOROOT(1)
+exec_cmd:
+        CODE
+        RCALL   ?PROLOGUE5_L09
+        REQUIRE ?Register_R4_is_cg_reg
+        LDI     R24, 0
+        LDI     R25, 0
+        RJMP    ??exec_cmd_0
+??exec_cmd_1:
+        INC     R24
+??exec_cmd_0:
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_2:
+        ADD     R16, R24
+        ADC     R17, R25
+        MOVW    R31:R30, R17:R16
+        LD      R26, Z
+        MOV     R30, R26
+        LDI     R31, 0
+        SUBI    R30, LOW((-(_Small_Ctype + 1) & 0xFFFF))
+        SBCI    R31, HIGH((-(_Small_Ctype + 1) & 0xFFFF))
+        LPM     R18, Z
+        ANDI    R18, 0x07
+        BRNE    ??exec_cmd_1
+        MOVW    R31:R30, R17:R16
+        ST      Z, R25
+        INC     R24
+        MOV     R4, R24
+        LDI     R24, 0
+        RJMP    ??exec_cmd_2
+??exec_cmd_3:
+        INC     R24
+??exec_cmd_2:
+        RCALL   get_params_num
+        CP      R24, R16
+        CPC     R25, R17
+        BRGE    ??exec_cmd_4
+        MOV     R16, R24
+        RCALL   get_params_name
+        MOVW    R19:R18, R17:R16
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_3:
+        RCALL   strcmp
+        OR      R16, R17
+        BRNE    ??exec_cmd_3
+        CPI     R26, 61
+        BRNE    ??exec_cmd_3
+        MOV     R16, R4
+        RJMP    ??exec_cmd_5
+??exec_cmd_6:
+        INC     R16
+??exec_cmd_5:
+        LDI     R31, 0
+        MOV     R30, R16
+        SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+        SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+        LD      R30, Z
+        LDI     R31, 0
+        SUBI    R30, LOW((-(_Small_Ctype + 1) & 0xFFFF))
+        SBCI    R31, HIGH((-(_Small_Ctype + 1) & 0xFFFF))
+        LPM     R17, Z
+        ANDI    R17, 0x07
+        BRNE    ??exec_cmd_6
+        MOVW    R19:R18, R25:R24
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_4:
+        ADD     R16, R4
+        ADC     R17, R19
+        RCALL   Str_to_param
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_1:
+        LDI     R16, 61
+        RCALL   USART_Transmit
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_5:
+        RCALL   USART_sendstr
+??exec_cmd_7:
+        LDI     R16, 1
+??exec_cmd_8:
+        LDI     R30, 5
+        RJMP    ?EPILOGUE_B5_L09
+??exec_cmd_4:
+        CPI     R26, 63
+        BRNE    ??exec_cmd_9
+        LDI     R24, 0
+??exec_cmd_10:
+        RCALL   get_params_num
+        CP      R24, R16
+        CPC     R25, R17
+        BRGE    ??exec_cmd_7
+        LDI     R16, 10
+        RCALL   USART_Transmit
+        LDI     R16, 13
+        RCALL   USART_Transmit
+        MOV     R16, R24
+        RCALL   get_params_name
+        RCALL   USART_sendstr
+        LDI     R16, 61
+        RCALL   USART_Transmit
+        RCALL   ?Subroutine0
+??CrossCallReturnLabel_0:
+        RCALL   ?Subroutine1
+??CrossCallReturnLabel_6:
+        RCALL   USART_sendstr
+        INC     R24
+        RJMP    ??exec_cmd_10
+??exec_cmd_9:
+        CPI     R26, 43
+        BRNE    ??exec_cmd_11
+        RCALL   Save_Params_To_EEPROM
+        LDI     R16, LOW(`?<Constant "All parameters saved!">`)
+        LDI     R17, (`?<Constant "All parameters saved!">`) >> 8
+        RJMP    ??CrossCallReturnLabel_5
+??exec_cmd_11:
+        CPI     R26, 45
+        BRNE    ??exec_cmd_12
+        RCALL   Restore_settings_from_eeprom
+        LDI     R16, LOW((`?<Constant "All parameters saved!">` + 22))
+        LDI     R17, HIGH((`?<Constant "All parameters saved!">` + 22))
+        RJMP    ??CrossCallReturnLabel_5
+??exec_cmd_12:
+        CPI     R26, 42
+        BRNE    ??exec_cmd_13
+        RCALL   Restore_default_settings
+        LDI     R16, LOW((`?<Constant "All parameters saved!">` + 44))
+        LDI     R17, HIGH((`?<Constant "All parameters saved!">` + 44))
+        RJMP    ??CrossCallReturnLabel_5
+??exec_cmd_13:
+        CPI     R26, 46
+        BRNE    ??exec_cmd_7
+        LDI     R16, 0
+        RJMP    ??exec_cmd_8
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine1:
+        LDI     R16, LOW(strbuf)
+        LDI     R17, (strbuf) >> 8
+        RET
+
+        RSEG `CODE`:CODE:NOROOT(1)
+?Subroutine0:
+        MOVW    R19:R18, R25:R24
+        LDI     R16, LOW(strbuf)
+        LDI     R17, (strbuf) >> 8
+        RJMP    Param_to_str
+//   21 
+//   22 
+//   23 unsigned char exec_cmd(void);
+//   24 
+//   25 /*--------------------------------------------------------------------------------------
+//   26   Процедура работы через последовательный интерфейс
+//   27   --------------------------------------------------------------------------------------*/
+
+        RSEG `CODE`:CODE:NOROOT(1)
+//   28 void terminal(void)
+terminal:
+        CODE
+//   29 {
+        RCALL   ?PROLOGUE4_L09
+//   30   char ch;
+//   31   unsigned char k = 0;
+        RJMP    ??terminal_0
+//   32 
+//   33 
+//   34   do
+//   35   {
+//   36     if (DataInReceiveBuffer())
+//   37     {
+//   38       unsigned char res;
+//   39       ch = USART_Receive();
+//   40       if (ch=='\r')
+//   41       {
+//   42         crlf();
+??terminal_1:
+        RCALL   crlf
+//   43         USART_Transmit(' ');
+        LDI     R16, 32
+        RCALL   USART_Transmit
+//   44         res = exec_cmd();
+        RCALL   exec_cmd
+        MOV     R24, R16
+//   45         crlf();
+        RCALL   crlf
+//   46         if (res==0)
+        TST     R24
+        BREQ    ??terminal_2
+//   47         {
+//   48           break;
+//   49         }
+//   50         USART_Transmit('>');
+        LDI     R16, 62
+        RCALL   USART_Transmit
+//   51         k = 0;
+??terminal_0:
+        LDI     R26, 0
+//   52       }
+??terminal_3:
+        RCALL   DataInReceiveBuffer
+        TST     R16
+        BREQ    ??terminal_3
+        RCALL   USART_Receive
+        MOV     R24, R16
+        CPI     R16, 13
+        BREQ    ??terminal_1
+//   53       else if (ch==0x1B)
+        CPI     R16, 27
+        BRNE    ??terminal_4
+//   54       {
+//   55         crlf();
+        RCALL   crlf
+//   56         break;
+//   57       }
+//   58       else
+//   59       {
+//   60         // Отправить эхо
+//   61         USART_Transmit(ch);
+//   62         strbuf[k] = ch;
+//   63         k++;
+//   64         strbuf[k] = 0;
+//   65         if (k == (INBUF_LEN-1))
+//   66         {
+//   67           USART_sendstr("\n\rIn buf. overflow!\n\r>");
+//   68           k = 0;
+//   69         }
+//   70       }
+//   71     }
+//   72 
+//   73   }
+//   74   while (1);
+//   75 }
+??terminal_2:
+        LDI     R30, 4
+        RJMP    ?EPILOGUE_B4_L09
+??terminal_4:
+        RCALL   USART_Transmit
+        LDI     R27, 0
+        MOVW    R31:R30, R27:R26
+        SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+        SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+        ST      Z, R24
+        INC     R26
+        MOVW    R31:R30, R27:R26
+        SUBI    R30, LOW((-(strbuf) & 0xFFFF))
+        SBCI    R31, (-(strbuf) & 0xFFFF) >> 8
+        ST      Z, R27
+        CPI     R26, 99
+        BRNE    ??terminal_3
+        LDI     R16, LOW(`?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`)
+        LDI     R17, (`?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`) >> 8
+        RCALL   USART_sendstr
+        RJMP    ??terminal_0
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01cH
+__?EECR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01dH
+__?EEDR:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01eH
+__?EEARL:
+
+        ASEGN ABSOLUTE:DATA:NOROOT,01fH
+__?EEARH:
+
+        RSEG NEAR_ID:CODE:NOROOT(0)
+        DATA
+`?<Initializer for <Constant "\\n\\rIn buf. overf`:
+        DC8 "\012\015In buf. overflow!\012\015>"
+
+        RSEG INITTAB:CODE:NOROOT(0)
+        DATA
+`?<Segment init: NEAR_I>`:
+        DC16    SFE(NEAR_I) - SFB(NEAR_I)
+        DC16    SFB(NEAR_I)
+        DC16    SFB(NEAR_ID)
+        REQUIRE ?need_segment_init
+
+        RSEG NEAR_ID:CODE:NOROOT(0)
+        DATA
+`?<Initializer for <Constant "All parameters sa`:
+        DC8 "All parameters saved!"
+`?<Initializer for <Constant "Restored from EEP`:
+        DC8 "Restored from EEPROM!"
+`?<Initializer for <Constant "Restored defaults`:
+        DC8 "Restored defaults!"
+
+        RSEG INITTAB:CODE:NOROOT(0)
+        DATA
+`?<Segment init: NEAR_Z>`:
+        DC16    SFE(NEAR_Z) - SFB(NEAR_Z)
+        DC16    SFB(NEAR_Z)
+        DC16    0
+        REQUIRE ?need_segment_init
+
+        RSEG NEAR_I:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_I>`
+`?<Constant "\\n\\rIn buf. overflow!\\n\\r>">`:
+        DS8 23
+        REQUIRE `?<Initializer for <Constant "\\n\\rIn buf. overf`
+
+        RSEG NEAR_I:DATA:NOROOT(0)
+        REQUIRE `?<Segment init: NEAR_I>`
+`?<Constant "All parameters saved!">`:
+        DS8 22
+        REQUIRE `?<Initializer for <Constant "All parameters sa`
+        DS8 22
+        REQUIRE `?<Initializer for <Constant "Restored from EEP`
+        DS8 19
+        REQUIRE `?<Initializer for <Constant "Restored defaults`
+
+        END
+//   76 	
+//   77 
+//   78 /*--------------------------------------------------------------------------------------
+//   79    Выполнение поступившей команды
+//   80   --------------------------------------------------------------------------------------*/
+//   81 unsigned char exec_cmd(void)
+//   82 {
+//   83   unsigned char i,j,k;
+//   84   char* cname;
+//   85   char ch;
+//   86 
+//   87   i=0;
+//   88 
+//   89   while (isalnum(strbuf[i])!=0) i++;
+//   90 
+//   91   k = i;
+//   92   ch = strbuf[k];
+//   93   strbuf[k] = 0;  // Обозначим конец строки имени параметра
+//   94   k++;
+//   95 
+//   96   // Искать параметр с заданным именем
+//   97   for (i=0;i < get_params_num(); i++)
+//   98   {
+//   99     cname = get_params_name(i);
+//  100     if (strcmp(strbuf, cname)==0)
+//  101     {
+//  102       // Найден параметр
+//  103       if (ch=='=')
+//  104       {
+//  105         j = k;
+//  106         // Обнаружена команда записи, прочитать аргумент
+//  107         while (isalnum(strbuf[j])!=0) j++;
+//  108         Str_to_param((unsigned char*)&strbuf[k],i);
+//  109         Param_to_str((unsigned char*)strbuf,i);
+//  110         USART_Transmit('=');
+//  111         USART_sendstr(strbuf);
+//  112         return 1;
+//  113       }
+//  114 
+//  115     }
+//  116   }
+//  117   // Если не нашли такой параметр, то проверить не запрос ли это всех параметров
+//  118   if (ch=='?')
+//  119   {
+//  120     for (i=0;i < get_params_num(); i++)
+//  121     {
+//  122       USART_Transmit('\n');
+//  123       USART_Transmit('\r');
+//  124       cname = get_params_name(i);
+//  125       USART_sendstr(cname);
+//  126       USART_Transmit('=');
+//  127       Param_to_str((unsigned char*)strbuf,i);
+//  128       USART_sendstr(strbuf);
+//  129     }
+//  130     return 1;
+//  131   }
+//  132 
+//  133   if (ch=='+')  // Сохраним все параметры в EEPROM
+//  134   {
+//  135     Save_Params_To_EEPROM();
+//  136     USART_sendstr("All parameters saved!");
+//  137     return 1;
+//  138   }
+//  139 
+//  140   if (ch=='-')  // Восстановим параметры из EEPROM
+//  141   {
+//  142     Restore_settings_from_eeprom();
+//  143     USART_sendstr("Restored from EEPROM!");
+//  144     return 1;
+//  145   }
+//  146 
+//  147   if (ch=='*')  // Восстановим параметры по умолчанию
+//  148   {
+//  149     Restore_default_settings();
+//  150     USART_sendstr("Restored defaults!");
+//  151     return 1;
+//  152   }
+//  153 
+//  154   if (ch=='.')  // Восстановим параметры по умолчанию
+//  155   {
+//  156     return 0;
+//  157   }
+//  158 
+//  159 
+//  160 /*
+//  161   if (ch=='!')
+//  162   {
+//  163     unsigned int temperature;
+//  164     for (i=0;i<MAX_DEVICES;i++)
+//  165     {
+//  166       if (devices[i].id[0] == DS1820_FAMILY_ID)
+//  167       {
+//  168         temperature = DS1820_ReadTemperature(devices[i].id);
+//  169         sprintf((char*)strbuf,"%f",(float)temperature/2);
+//  170         strcat(strbuf,"\n\r");
+//  171         USART_sendstr(strbuf);
+//  172       }
+//  173 
+//  174     }
+//  175     return 1;
+//  176   }
+//  177 */
+//  178 
+//  179 
+//  180 
+//  181   return 1;
+//  182 }
+//  183 
+//  184 
+//  185 
+//  186 
+//  187 
+//  188 
+//  189 
+//  190 
+//  191 	
+//  192 	
+// 
+// 312 bytes in segment CODE
+//  12 bytes in segment INITTAB
+//  86 bytes in segment NEAR_I
+//  86 bytes in segment NEAR_ID
+// 100 bytes in segment NEAR_Z
+// 
+// 398 bytes of CODE memory (+ 12 bytes shared)
+// 186 bytes of DATA memory
+//
+//Errors: none
+//Warnings: none

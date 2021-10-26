@@ -1,0 +1,78 @@
+/*                      - lnkm8.xcl -
+ *
+ *   XLINK command file for the ICCAVR C-compiler using the --cpu=m8, -ms
+ *   options. 
+ *
+ *   Usage: xlink your_file(s) -f lnkm8
+ *
+ *   File version: $Revision: 1.4 $
+ */
+
+/*
+ * Modify the lines below to alter the size of the RSTACK, CSTACK and HEAP
+ * segments. These need to be fine tuned to suit your specific application.
+ * The '_..X_' prefix is used by C-SPY as an indication that the label should
+ * not be displayed in the dissassembly window.
+ */
+-D_..X_CSTACK_SIZE=80  /* 256 bytes for auto variables and saved registers. */
+-D_..X_RSTACK_SIZE=40   /* 64 bytes for return addresses, equivalent to 32 */
+                        /* levels of calls, including interrupts. */
+-D_..X_HEAP_SIZE=0     /* 128 bytes of heap. */
+
+/* Define CPU */
+-ca90
+
+/*
+ * The following segments are located in the internal memory of
+ * the ATmega8. Do not change these lines.
+ */
+
+/* Code memory */
+
+-Z(CODE)INTVEC=0-25 /* 19 Interrupt vectors * 2 bytes each */
+
+/* Fill unused interrupt vector's with RETI */
+-H1895 -h(CODE)0-25
+
+-Z(CODE)TINY_F=26-FF
+-Z(CODE)NEAR_F,SWITCH,INITTAB,DIFUNCT=26-1FFF
+-Z(CODE)CODE=26-1FFF
+-Z(CODE)TINY_ID,NEAR_ID=26-1FFF
+-Z(CODE)CHECKSUM#1FFF
+
+/* Internal data memory */
+-Z(DATA)TINY_I,TINY_Z,TINY_N=60-FF
+-Z(DATA)NEAR_I,NEAR_N,NEAR_Z=60-45F
+-Z(DATA)RSTACK+_..X_RSTACK_SIZE=60-45F
+-Z(DATA)CSTACK+_..X_CSTACK_SIZE=60-45F
+-Z(DATA)HEAP+_..X_HEAP_SIZE=60-45F
+
+/* Internal eeprom memory */
+-Z(XDATA)EEPROM_I,EEPROM_N=0-1FF
+
+/* Select reduced "printf" support to reduce library size.
+   See configuration section in manual concerning printf/sprintf. */
+
+/*Dlib*/
+-e_Printf_1=_Printf
+
+/*Clib*/
+-e_small_write=_formatted_write
+-e_small_write_P=_formatted_write_P
+
+/* Disable floating-point support in "scanf" to reduce library size.
+   See configuration section in manual concerning scanf/sscanf */
+
+/*Dlib*/
+-e_Scanf_1=_Scanf
+
+/*Clib*/
+-e_medium_read=_formatted_read
+-e_medium_read_P=_formatted_read_P
+
+/* Suppress one warning which is not relevant for this processor */
+-w29
+
+/* Code will now reside in file aout.a90 or aout.d90, unless -o is specified */
+/* .d90 is the default if debug system is linked (option -r) */
+/* .a90 is the default without debugging. Default format is -Fmotorola */

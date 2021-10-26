@@ -1,0 +1,341 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  16:53:18
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW6866.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List
+#        --initializers_in_flash --debug -DENABLE_BIT_DEFINITIONS -e
+#        --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\List\Timers.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Debug\Obj\Timers.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Receiver\Timers.c
+      1          #include <iom8.h>
+
+   \                                 In  segment ABSOLUTE, at 0x59
+   \   union <unnamed> volatile __io _A_TIMSK
+   \                     _A_TIMSK:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x58
+   \   union <unnamed> volatile __io _A_TIFR
+   \                     _A_TIFR:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x53
+   \   union <unnamed> volatile __io _A_TCCR0
+   \                     _A_TCCR0:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x4f
+   \   union <unnamed> volatile __io _A_TCCR1A
+   \                     _A_TCCR1A:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x4e
+   \   union <unnamed> volatile __io _A_TCCR1B
+   \                     _A_TCCR1B:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x4a
+   \   union <unnamed> volatile __io _A_OCR1A
+   \                     _A_OCR1A:
+   \   00000000                      DS8 2
+      2          #include <ina90.h>
+      3          #include "main.h"
+      4          #include "Timers.h"
+      5          #include "bin_defines.h"
+      6          
+      7          
+      8          /*
+      9            Программирование таймера 1 в режиме CTC на заданный период
+     10          
+     11            Период рассчитываеться в секундах как:  period/Fosc
+     12          
+     13          
+     14          
+     15          */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     16          void TIMER1_CTC_Init(unsigned int period)
+   \                     TIMER1_CTC_Init:
+     17          {
+   \   00000000   2F20               MOV     R18, R16
+     18          
+     19            unsigned char tmp;
+     20            // Предварительно выключим
+     21          
+     22            TIMER1_CTC_Stop();
+   \   00000002   ....               RCALL   TIMER1_CTC_Stop
+     23          
+     24            OCR1A = period;
+   \   00000004   BD1B               OUT     0x2B, R17
+   \   00000006   BD2A               OUT     0x2A, R18
+     25          
+     26            // Программируем канал B в режим очистки таймера по совпадению (CTC) c TOP величиной в OCR1A
+     27            // Канал A отключен
+     28            TCCR1A = b00000000; //
+   \   00000008   E000               LDI     R16, 0
+   \   0000000A   BD0F               OUT     0x2F, R16
+     29          
+     30            // Источник тактов - частота кварца 16 Мег
+     31            // Режим CTC
+     32            TCCR1B = b00001001;
+   \   0000000C   E009               LDI     R16, 9
+   \   0000000E   BD0E               OUT     0x2E, R16
+     33          
+     34            tmp    = TIMSK;
+     35            tmp    = tmp & ~(1 << TICIE1) & ~(1 << OCIE1A) & ~(1 << OCIE1B) & ~(1 << TOIE1);
+     36            TIMSK  = tmp;
+   \   00000010   B709               IN      R16, 0x39
+   \   00000012   7C03               ANDI    R16, 0xC3
+   \   00000014   BF09               OUT     0x39, R16
+     37          
+     38            tmp    = TIFR;
+     39            tmp    = ~tmp | (1 << ICF1) | (1 << OCF1A) | (1 << OCF1B) | (1 << TOV1); // Флаги сбрасываються записью единицы
+     40            TIFR   = tmp;
+   \   00000016   B708               IN      R16, 0x38
+   \   00000018   9500               COM     R16
+   \   0000001A   630C               ORI     R16, 0x3C
+   \   0000001C   BF08               OUT     0x38, R16
+     41          
+     42          
+     43          }
+   \   0000001E   9508               RET
+   \   00000020                      REQUIRE _A_OCR1A
+   \   00000020                      REQUIRE _A_TCCR1A
+   \   00000020                      REQUIRE _A_TCCR1B
+   \   00000020                      REQUIRE _A_TIMSK
+   \   00000020                      REQUIRE _A_TIFR
+     44          
+     45          /*
+     46            Разрешение прерывания от компаратора B таймера 1
+     47          
+     48          */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     49          void TIMER1_OCB_int_en(void)
+   \                     TIMER1_OCB_int_en:
+     50          {
+     51            unsigned char tmp;
+     52          
+     53            tmp    = TIFR;
+     54            tmp    = ~tmp | (1 << OCF1B); // Флаги сбрасываються записью единицы
+     55            TIFR   = tmp;
+   \   00000000   ....               RCALL   ?Subroutine0
+     56          
+     57            tmp    = TIMSK;
+     58            tmp    = tmp  | (1 << OCIE1B);
+     59            TIMSK  = tmp;
+   \                     ??CrossCallReturnLabel_0:
+   \   00000002   6008               ORI     R16, 0x08
+   \   00000004                      REQUIRE ?Subroutine2
+   \   00000004                      REQUIRE _A_TIFR
+   \   00000004                      REQUIRE _A_TIMSK
+   \   00000004                      ;               // Fall through to label ?Subroutine2
+     60          
+     61          }
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine2:
+   \   00000000   BF09               OUT     0x39, R16
+   \   00000002   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine0:
+   \   00000000   B708               IN      R16, 0x38
+   \   00000002   9500               COM     R16
+   \   00000004   6008               ORI     R16, 0x08
+   \   00000006   BF08               OUT     0x38, R16
+   \   00000008   B709               IN      R16, 0x39
+   \   0000000A   9508               RET
+     62          
+     63          /*
+     64            Запрещение прерывания от компаратора B таймера 1
+     65          
+     66          */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     67          void TIMER1_OCB_int_dis(void)
+   \                     TIMER1_OCB_int_dis:
+     68          {
+     69            unsigned char tmp;
+     70          
+     71            tmp    = TIFR;
+     72            tmp    = ~tmp | (1 << OCF1B); // Флаги сбрасываються записью единицы
+     73            TIFR   = tmp;
+   \   00000000   ....               RCALL   ?Subroutine0
+     74          
+     75            tmp    = TIMSK;
+     76            tmp    = tmp  & ~(1 << OCIE1B);
+     77            TIMSK  = tmp;
+   \                     ??CrossCallReturnLabel_1:
+   \   00000002   7F07               ANDI    R16, 0xF7
+   \   00000004   ....               RJMP    ?Subroutine2
+   \   00000006                      REQUIRE _A_TIFR
+   \   00000006                      REQUIRE _A_TIMSK
+     78          
+     79          }
+     80          
+     81          
+     82          /*
+     83            Принудительно установить 0 на выходе OCA и подготовить установку заданного бита
+     84          
+     85          */
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     86          void TIMER1_OCB_force_state(unsigned char bits)
+   \                     TIMER1_OCB_force_state:
+     87          {
+     88          
+     89            if (bits & 1)
+   \   00000000   FB00               BST     R16, 0
+   \   00000002   F40E               BRTC    ??TIMER1_OCB_force_state_0
+     90              TIMER1_OCB_outmod_set1();
+   \   00000004   ....               RJMP    TIMER1_OCB_outmod_set1
+     91            else
+     92              TIMER1_OCB_outmod_set0();
+   \                     ??TIMER1_OCB_force_state_0:
+   \   00000006   ....               RJMP    TIMER1_OCB_outmod_set0
+     93          
+     94          }
+     95          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine1:
+   \   00000000   BD0F               OUT     0x2F, R16
+   \   00000002   9508               RET
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     96          void TIMER1_OCB_outmod_set1(void)
+   \                     TIMER1_OCB_outmod_set1:
+     97          {
+     98            unsigned char tmp;
+     99            tmp = TCCR1A;
+    100            tmp = (tmp & 0xCF) | b00110000;
+    101            TCCR1A = tmp;
+   \   00000000   B50F               IN      R16, 0x2F
+   \   00000002   6300               ORI     R16, 0x30
+   \   00000004   ....               RJMP    ?Subroutine1
+   \   00000006                      REQUIRE _A_TCCR1A
+    102          }
+    103          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    104          void TIMER1_OCB_outmod_set0(void)
+   \                     TIMER1_OCB_outmod_set0:
+    105          {
+    106            unsigned char tmp;
+    107            tmp = TCCR1A;
+    108            tmp = (tmp & 0xCF) | b00100000;
+    109            TCCR1A = tmp;
+   \   00000000   B50F               IN      R16, 0x2F
+   \   00000002   7C0F               ANDI    R16, 0xCF
+   \   00000004   6200               ORI     R16, 0x20
+   \   00000006   ....               RJMP    ?Subroutine1
+   \   00000008                      REQUIRE _A_TCCR1A
+    110          }
+    111          
+    112          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    113          void TIMER1_CTC_Stop(void)
+   \                     TIMER1_CTC_Stop:
+    114          {
+    115            TCCR1B = 0;
+   \   00000000   E000               LDI     R16, 0
+   \   00000002   BD0E               OUT     0x2E, R16
+    116            TCCR1A = 0;
+   \   00000004                      REQUIRE ?Subroutine1
+   \   00000004                      REQUIRE _A_TCCR1B
+   \   00000004                      REQUIRE _A_TCCR1A
+   \   00000004                      ;               // Fall through to label ?Subroutine1
+    117          
+    118          }
+    119          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+    120          void TIMER0_init(void)
+   \                     TIMER0_init:
+    121          {
+    122            // Инициализируем прерывания от таймера 0, для обслуживания всяких временных интервалов	
+    123            // Частоту следования прерываний выбираем (16 000 000/64)/256 = 976,5625 Гц -> 0.001024 мс
+    124            TCCR0  = b00000011; // Предделитель = 64
+   \   00000000   E003               LDI     R16, 3
+   \   00000002   BF03               OUT     0x33, R16
+    125            TIFR  |= b00000001; //
+   \   00000004   B708               IN      R16, 0x38
+   \   00000006   6001               ORI     R16, 0x01
+   \   00000008   BF08               OUT     0x38, R16
+    126            TIMSK |= b00000001; // Разрешаем прерывания
+   \   0000000A   B709               IN      R16, 0x39
+   \   0000000C   6001               ORI     R16, 0x01
+   \   0000000E   ....               RJMP    ?Subroutine2
+   \   00000010                      REQUIRE _A_TCCR0
+   \   00000010                      REQUIRE _A_TIFR
+   \   00000010                      REQUIRE _A_TIMSK
+    127          }
+
+   Maximum stack usage in bytes:
+
+   RSTACK Function
+   ------ --------
+      2   TIMER0_init
+      2   TIMER1_CTC_Init
+        2   -> TIMER1_CTC_Stop
+      2   TIMER1_CTC_Stop
+      2   TIMER1_OCB_force_state
+        2   -> TIMER1_OCB_outmod_set0
+        2   -> TIMER1_OCB_outmod_set1
+      2   TIMER1_OCB_int_dis
+      2   TIMER1_OCB_int_en
+      2   TIMER1_OCB_outmod_set0
+      2   TIMER1_OCB_outmod_set1
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+      12  ?Subroutine0
+       4  ?Subroutine1
+       4  ?Subroutine2
+      16  TIMER0_init
+      32  TIMER1_CTC_Init
+       4  TIMER1_CTC_Stop
+       8  TIMER1_OCB_force_state
+       6  TIMER1_OCB_int_dis
+       4  TIMER1_OCB_int_en
+       8  TIMER1_OCB_outmod_set0
+       6  TIMER1_OCB_outmod_set1
+       2  _A_OCR1A
+       1  _A_TCCR0
+       1  _A_TCCR1A
+       1  _A_TCCR1B
+       1  _A_TIFR
+       1  _A_TIMSK
+
+ 
+   7 bytes in segment ABSOLUTE
+ 104 bytes in segment CODE
+ 
+ 104 bytes of CODE memory
+   0 bytes of DATA memory (+ 7 bytes shared)
+
+Errors: none
+Warnings: none

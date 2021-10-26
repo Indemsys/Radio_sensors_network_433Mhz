@@ -1,0 +1,159 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  17:01:07
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\ADC.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW92E6.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\ADC.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        --initializers_in_flash --no_cross_call --no_clustering --no_tbaa
+#        --debug -DENABLE_BIT_DEFINITIONS -e --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List\ADC.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj\ADC.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\ADC.c
+      1          #include <iom8.h>
+
+   \                                 In  segment ABSOLUTE, at 0x27
+   \   union <unnamed> volatile __io _A_ADMUX
+   \                     _A_ADMUX:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x26
+   \   union <unnamed> volatile __io _A_ADCSRA
+   \                     _A_ADCSRA:
+   \   00000000                      DS8 1
+
+   \                                 In  segment ABSOLUTE, at 0x24
+   \   union <unnamed> volatile __io _A_ADC
+   \                     _A_ADC:
+   \   00000000                      DS8 2
+      2          #include <ina90.h>
+      3          #include <string.h>
+      4          #include <pgmspace.h>
+      5          #include <stdio.h>
+      6          #include "main.h"
+      7          #include "USART.h"
+      8          #include "DS1Wire.h"
+      9          #include "Timers.h"
+     10          #include "ADC.h"
+     11          #include "RF_transmitter.h"
+     12          #include "Util.h"
+     13          
+     14          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     15          void ADC_init(void)
+   \                     ADC_init:
+     16          {
+     17            // Установка источника опорного напряжения - внутренний 2.56 В (bit 6, bit 7)
+     18            // Результат выровнен в право (bit 5)
+     19            // Мультиплексор переключен на канал 0
+     20            ADMUX  = b11000000;
+   \   00000000   EC00               LDI     R16, 192
+   \   00000002   B907               OUT     0x07, R16
+     21          
+     22            // АЦП включен в однократном режиме, прерывания запрещенв, тактовая частота в 128 раз ниже частоты кварца 
+     23            ADCSRA  = b10000111;
+   \   00000004   E807               LDI     R16, 135
+   \   00000006                      REQUIRE ?Subroutine0
+   \   00000006                      REQUIRE _A_ADMUX
+   \   00000006                      REQUIRE _A_ADCSRA
+   \   00000006                      ;               // Fall through to label ?Subroutine0
+     24            
+     25          }
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine0:
+   \   00000000   B906               OUT     0x06, R16
+   \   00000002   9508               RET
+     26          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     27          unsigned int ADC_get_select_ch(unsigned char ch)
+   \                     ADC_get_select_ch:
+     28          {
+     29            ADMUX  = (ADMUX & 0xF0) | ( ch & 0x0F) ;
+   \   00000000   B117               IN      R17, 0x07
+   \   00000002   7F10               ANDI    R17, 0xF0
+   \   00000004   700F               ANDI    R16, 0x0F
+   \   00000006   2B10               OR      R17, R16
+   \   00000008   B917               OUT     0x07, R17
+     30            ADCSRA  = b11010111; // Очищаем флаг прерывания и стартуем 
+   \   0000000A   ED07               LDI     R16, 215
+   \   0000000C   B906               OUT     0x06, R16
+     31            
+     32            while ((ADCSRA & b00010000)==0); // Ждем появления флага ADIF
+   \                     ??ADC_get_select_ch_0:
+   \   0000000E   9B34               SBIS    0x06, 0x04
+   \   00000010   CFFE               RJMP    ??ADC_get_select_ch_0
+     33            
+     34            return ADC;
+   \   00000012   B104               IN      R16, 0x04
+   \   00000014   B115               IN      R17, 0x05
+   \   00000016   9508               RET
+   \   00000018                      REQUIRE _A_ADMUX
+   \   00000018                      REQUIRE _A_ADCSRA
+   \   00000018                      REQUIRE _A_ADC
+     35          }
+     36          
+     37          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     38          void ADC_switch_off(void)
+   \                     ADC_switch_off:
+     39          {
+     40            ADMUX  = 0;
+   \   00000000   E000               LDI     R16, 0
+   \   00000002   B907               OUT     0x07, R16
+     41            ADCSRA  = 0;
+   \   00000004   ....               RJMP    ?Subroutine0
+   \   00000006                      REQUIRE _A_ADMUX
+   \   00000006                      REQUIRE _A_ADCSRA
+     42          }  
+     43          
+     44          
+
+   Maximum stack usage in bytes:
+
+   RSTACK Function
+   ------ --------
+      2   ADC_get_select_ch
+      2   ADC_init
+      2   ADC_switch_off
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       4  ?Subroutine0
+      24  ADC_get_select_ch
+       6  ADC_init
+       6  ADC_switch_off
+       2  _A_ADC
+       1  _A_ADCSRA
+       1  _A_ADMUX
+
+ 
+  4 bytes in segment ABSOLUTE
+ 40 bytes in segment CODE
+ 
+ 40 bytes of CODE memory
+  0 bytes of DATA memory (+ 4 bytes shared)
+
+Errors: none
+Warnings: none

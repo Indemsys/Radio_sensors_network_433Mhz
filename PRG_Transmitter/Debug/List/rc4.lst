@@ -1,0 +1,254 @@
+###############################################################################
+#
+# IAR C/C++ Compiler V7.30.4.1668 for Microchip AVR       26/Oct/2021  17:01:07
+# Copyright 1996-2021 IAR Systems AB.
+#
+#    Source file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\rc4.c
+#    Command line =  
+#        -f C:\Users\aly\AppData\Local\Temp\EW92E1.tmp
+#        (D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\rc4.c
+#        --cpu=m8 -ms -o
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj
+#        -lCN
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        -lB
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List
+#        --initializers_in_flash --no_cross_call --no_clustering --no_tbaa
+#        --debug -DENABLE_BIT_DEFINITIONS -e --eeprom_size 512 --clib -Ohz)
+#    Locale       =  Russian_RUS.1251
+#    List file    =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\List\rc4.lst
+#    Object file  =  
+#        D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\Debug\Obj\rc4.r90
+#
+###############################################################################
+
+D:\Embedded\Projects\OpenSource\Radio_network_433Mhz\PRG_Transmitter\rc4.c
+      1          /*
+      2           *  An implementation of the ARC4 algorithm
+      3           *
+      4           *  Copyright (C) 2001-2003  Christophe Devine
+      5           *
+      6           *  This program is free software; you can redistribute it and/or modify
+      7           *  it under the terms of the GNU General Public License as published by
+      8           *  the Free Software Foundation; either version 2 of the License, or
+      9           *  (at your option) any later version.
+     10           *
+     11           *  This program is distributed in the hope that it will be useful,
+     12           *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+     13           *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+     14           *  GNU General Public License for more details.
+     15           *
+     16           *  You should have received a copy of the GNU General Public License
+     17           *  along with this program; if not, write to the Free Software
+     18           *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+     19           */
+     20          
+     21          #include "rc4.h"
+     22          
+
+   \                                 In  segment NEAR_Z, align 1, keep-with-next
+   \   00000000                      REQUIRE `?<Segment init: NEAR_Z>`
+     23          t_rc4_state rc4state;
+   \                     rc4state:
+   \   00000000                      DS8 258
+     24          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     25          void rc4_setup(unsigned char *key,  unsigned char length )
+   \                     rc4_setup:
+     26          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+   \   00000002   01A8               MOVW    R21:R20, R17:R16
+   \   00000004   2F32               MOV     R19, R18
+   \   00000006   E000               LDI     R16, 0
+   \   00000008   9300....           STS     rc4state, R16
+     27              unsigned int  i;
+     28              unsigned char j, k, a;
+     29              unsigned char *m;
+     30          
+     31              rc4state.x = 0;
+     32              rc4state.y = 0;
+   \   0000000C   9300....           STS     (rc4state + 1), R16
+     33              m = rc4state.m;
+     34          
+     35              for( i = 0; i < 256; i++ )
+   \   00000010   E010               LDI     R17, 0
+   \   00000012   E080               LDI     R24, 0
+   \   00000014   E091               LDI     R25, 1
+     36              {
+     37                  m[i] = i;
+   \                     ??rc4_setup_0:
+   \   00000016   ....               LDI     R30, LOW(rc4state)
+   \   00000018   ....               LDI     R31, (rc4state) >> 8
+   \   0000001A   0FE0               ADD     R30, R16
+   \   0000001C   1FF1               ADC     R31, R17
+   \   0000001E   8302               STD     Z+2, R16
+     38              }
+   \   00000020   5F0F               SUBI    R16, 255
+   \   00000022   4F1F               SBCI    R17, 255
+   \   00000024   9701               SBIW    R25:R24, 1
+   \   00000026   F7B9               BRNE    ??rc4_setup_0
+     39          
+     40              j = k = 0;
+   \   00000028   E020               LDI     R18, 0
+   \   0000002A   E060               LDI     R22, 0
+     41          
+     42              for( i = 0; i < 256; i++ )
+   \   0000002C   E000               LDI     R16, 0
+   \   0000002E   E010               LDI     R17, 0
+   \   00000030   E080               LDI     R24, 0
+   \   00000032   E091               LDI     R25, 1
+     43              {
+     44                  a = m[i];
+   \                     ??rc4_setup_1:
+   \   00000034   ....               LDI     R30, LOW(rc4state)
+   \   00000036   ....               LDI     R31, (rc4state) >> 8
+   \   00000038   0FE0               ADD     R30, R16
+   \   0000003A   1FF1               ADC     R31, R17
+   \   0000003C   8022               LDD     R2, Z+2
+     45                  j = (unsigned char) ( j + a + key[k] );
+   \   0000003E   2411               CLR     R1
+   \   00000040   01DA               MOVW    R27:R26, R21:R20
+   \   00000042   0FA2               ADD     R26, R18
+   \   00000044   1DB1               ADC     R27, R1
+   \   00000046   917C               LD      R23, X
+   \   00000048   2C02               MOV     R0, R2
+   \   0000004A   0E07               ADD     R0, R23
+   \   0000004C   0D60               ADD     R22, R0
+     46                  m[i] = m[j]; 
+   \   0000004E   ....               LDI     R26, LOW(rc4state)
+   \   00000050   ....               LDI     R27, (rc4state) >> 8
+   \   00000052   0FA6               ADD     R26, R22
+   \   00000054   1DB1               ADC     R27, R1
+   \   00000056   9612               ADIW    R27:R26, 2
+   \   00000058   917C               LD      R23, X
+   \   0000005A   9712               SBIW    R27:R26, 2
+   \   0000005C   8372               STD     Z+2, R23
+     47                  m[j] = a;
+   \   0000005E   01FD               MOVW    R31:R30, R27:R26
+   \   00000060   8222               STD     Z+2, R2
+     48                  k++;
+     49                  if(k >= length ) k = 0;
+   \   00000062   9523               INC     R18
+   \   00000064   1723               CP      R18, R19
+   \   00000066   F008               BRCS    ??rc4_setup_2
+   \   00000068   E020               LDI     R18, 0
+     50              }
+   \                     ??rc4_setup_2:
+   \   0000006A   5F0F               SUBI    R16, 255
+   \   0000006C   4F1F               SBCI    R17, 255
+   \   0000006E   9701               SBIW    R25:R24, 1
+   \   00000070   F709               BRNE    ??rc4_setup_1
+     51          }
+   \   00000072                      REQUIRE ?Subroutine0
+   \   00000072                      ;               // Fall through to label ?Subroutine0
+
+   \                                 In  segment CODE, align 2, keep-with-next
+   \                     ?Subroutine0:
+   \   00000000   E0E4               LDI     R30, 4
+   \   00000002   ....               RJMP    ?EPILOGUE_B4_L09
+     52          
+
+   \                                 In  segment CODE, align 2, keep-with-next
+     53          void rc4_crypt(unsigned char *data, unsigned int length )
+   \                     rc4_crypt:
+     54          {
+   \   00000000   ....               RCALL   ?PROLOGUE4_L09
+   \   00000002   01A8               MOVW    R21:R20, R17:R16
+   \   00000004   9100....           LDS     R16, rc4state
+     55              unsigned int  i; 
+     56              unsigned char x, y, a, b;
+     57              unsigned char  *m;
+     58          
+     59              x = rc4state.x;
+     60              y = rc4state.y;
+   \   00000008   9160....           LDS     R22, (rc4state + 1)
+     61              m = rc4state.m;
+     62          
+     63              for( i = 0; i < length; i++ )
+   \   0000000C   E080               LDI     R24, 0
+   \   0000000E   E090               LDI     R25, 0
+   \   00000010   C021               RJMP    ??rc4_crypt_0
+     64              {
+     65                  x = (unsigned char) ( x + 1 ); a = m[x];
+   \                     ??rc4_crypt_1:
+   \   00000012   9503               INC     R16
+   \   00000014   E010               LDI     R17, 0
+   \   00000016   ....               LDI     R30, LOW(rc4state)
+   \   00000018   ....               LDI     R31, (rc4state) >> 8
+   \   0000001A   0FE0               ADD     R30, R16
+   \   0000001C   1FF1               ADC     R31, R17
+   \   0000001E   8002               LDD     R0, Z+2
+     66                  y = (unsigned char) ( y + a );
+   \   00000020   0D60               ADD     R22, R0
+     67                  m[x] = b = m[y];
+   \   00000022   ....               LDI     R30, LOW(rc4state)
+   \   00000024   ....               LDI     R31, (rc4state) >> 8
+   \   00000026   0FE6               ADD     R30, R22
+   \   00000028   1FF1               ADC     R31, R17
+   \   0000002A   8172               LDD     R23, Z+2
+   \   0000002C   ....               LDI     R26, LOW(rc4state)
+   \   0000002E   ....               LDI     R27, (rc4state) >> 8
+   \   00000030   0FA0               ADD     R26, R16
+   \   00000032   1FB1               ADC     R27, R17
+   \   00000034   9612               ADIW    R27:R26, 2
+   \   00000036   937C               ST      X, R23
+     68                  m[y] = a;
+   \   00000038   8202               STD     Z+2, R0
+     69                  data[i] ^= m[(unsigned char) ( a + b )];
+   \   0000003A   0E07               ADD     R0, R23
+   \   0000003C   ....               LDI     R30, LOW(rc4state)
+   \   0000003E   ....               LDI     R31, (rc4state) >> 8
+   \   00000040   0DE0               ADD     R30, R0
+   \   00000042   1FF1               ADC     R31, R17
+   \   00000044   8112               LDD     R17, Z+2
+   \   00000046   01FA               MOVW    R31:R30, R21:R20
+   \   00000048   0FE8               ADD     R30, R24
+   \   0000004A   1FF9               ADC     R31, R25
+   \   0000004C   8170               LD      R23, Z
+   \   0000004E   2771               EOR     R23, R17
+   \   00000050   8370               ST      Z, R23
+     70              }
+   \   00000052   9601               ADIW    R25:R24, 1
+   \                     ??rc4_crypt_0:
+   \   00000054   1782               CP      R24, R18
+   \   00000056   0793               CPC     R25, R19
+   \   00000058   F2E0               BRCS    ??rc4_crypt_1
+     71          
+     72              rc4state.x = x;
+   \   0000005A   9300....           STS     rc4state, R16
+     73              rc4state.y = y;
+   \   0000005E   9360....           STS     (rc4state + 1), R22
+     74          }
+   \   00000062   ....               RJMP    ?Subroutine0
+
+   Maximum stack usage in bytes:
+
+   CSTACK RSTACK Function
+   ------ ------ --------
+      4      2   rc4_crypt
+      4      2   rc4_setup
+
+
+   Segment part sizes:
+
+   Bytes  Function/Label
+   -----  --------------
+       4  ?Subroutine0
+     100  rc4_crypt
+     114  rc4_setup
+     258  rc4state
+       6  -- Other
+
+ 
+ 218 bytes in segment CODE
+   6 bytes in segment INITTAB
+ 258 bytes in segment NEAR_Z
+ 
+ 218 bytes of CODE memory (+ 6 bytes shared)
+ 258 bytes of DATA memory
+
+Errors: none
+Warnings: none

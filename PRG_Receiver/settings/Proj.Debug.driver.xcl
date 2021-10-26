@@ -1,0 +1,15 @@
+"--cpu=m8" 
+
+"--enhanced_core" 
+
+"-p" 
+
+"C:\Program Files (x86)\IAR Systems\Embedded Workbench 8.4\avr\Config\iom8.ddf" 
+
+"--eeprom_size" 
+
+"512" 
+
+
+
+

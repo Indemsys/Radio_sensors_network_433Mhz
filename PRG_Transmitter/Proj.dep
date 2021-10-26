@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <fileVersion>4</fileVersion>
+    <fileChecksum>2279289012</fileChecksum>
+    <configuration>
+        <name>Debug</name>
+        <outputs>
+            <file>$TOOLKIT_DIR$\inc\clib\pgmspace.h</file>
+            <file>$TOOLKIT_DIR$\inc\clib\stdio.h</file>
+            <file>$PROJ_DIR$\main.h</file>
+            <file>$PROJ_DIR$\DS1Wire.h</file>
+            <file>$PROJ_DIR$\Debug\List\main.s90</file>
+            <file>$TOOLKIT_DIR$\inc\clib\stdarg.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\DS1Wire.xcl</file>
+            <file>$PROJ_DIR$\bin_defines.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\Monitor.xcl</file>
+            <file>$PROJ_DIR$\RF_settings.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\RF_transmitter.xcl</file>
+            <file>$PROJ_DIR$\Monitor.h</file>
+            <file>$PROJ_DIR$\Timers.h</file>
+            <file>$PROJ_DIR$\RF_transmitter.h</file>
+            <file>$TOOLKIT_DIR$\inc\clib\stdlib.h</file>
+            <file>$TOOLKIT_DIR$\inc\intrinsics.h</file>
+            <file>$TOOLKIT_DIR$\inc\comp_a90.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.xcl</file>
+            <file>$PROJ_DIR$\Util.h</file>
+            <file>$PROJ_DIR$\wrk_params.h</file>
+            <file>$PROJ_DIR$\ADC.h</file>
+            <file>$PROJ_DIR$\rc4.h</file>
+            <file>$PROJ_DIR$\Debug\List\main.lst</file>
+            <file>$TOOLKIT_DIR$\inc\clib\sysmac.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\rc4.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\ADC.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\Timers.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\USART.xcl</file>
+            <file>$PROJ_DIR$\Debug\Obj\Util.xcl</file>
+            <file>$PROJ_DIR$\USART.h</file>
+            <file>$TOOLKIT_DIR$\inc\clib\string.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\Timers.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\RF_transmitter.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\DS1Wire.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\Monitor.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\USART.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\Util.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\ADC.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\DS1Wire.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\main.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\Monitor.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\rc4.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\wrk_params.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\ADC.r90</file>
+            <file>$PROJ_DIR$\Debug\Obj\rc4.r90</file>
+            <file>$PROJ_DIR$\Debug\List\Monitor.s90</file>
+            <file>$PROJ_DIR$\Debug\List\Monitor.lst</file>
+            <file>$TOOLKIT_DIR$\inc\clib\ctype.h</file>
+            <file>$PROJ_DIR$\Debug\Exe\Proj.a90</file>
+            <file>$PROJ_DIR$\Debug\Obj\RF_transmitter.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\wrk_params.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\USART.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\Obj\Util.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\List\ADC.lst</file>
+            <file>$PROJ_DIR$\Debug\Obj\Timers.__cstat.et</file>
+            <file>$PROJ_DIR$\Debug\List\wrk_params.lst</file>
+            <file>$PROJ_DIR$\Debug\List\wrk_params.s90</file>
+            <file>$PROJ_DIR$\Debug\List\Timers.s90</file>
+            <file>$PROJ_DIR$\Debug\List\Timers.lst</file>
+            <file>$PROJ_DIR$\Debug\Obj\Proj.pbd</file>
+            <file>$PROJ_DIR$\Debug\List\Util.s90</file>
+            <file>$PROJ_DIR$\Debug\List\Util.lst</file>
+            <file>$PROJ_DIR$\Debug\List\RF_transmitter.s90</file>
+            <file>$PROJ_DIR$\Debug\List\RF_transmitter.lst</file>
+            <file>$TOOLKIT_DIR$\inc\iom8.h</file>
+            <file>$TOOLKIT_DIR$\inc\iomacro.h</file>
+            <file>$PROJ_DIR$\Debug\Obj\wrk_params.xcl</file>
+            <file>$TOOLKIT_DIR$\inc\ina90.h</file>
+            <file>$TOOLKIT_DIR$\inc\bitdefinitions\iom8.inc</file>
+            <file>$TOOLKIT_DIR$\inc\inavr.h</file>
+            <file>$PROJ_DIR$\Debug\List\rc4.lst</file>
+            <file>$PROJ_DIR$\Debug\List\rc4.s90</file>
+            <file>$PROJ_DIR$\Debug\List\USART.lst</file>
+            <file>$PROJ_DIR$\Debug\List\USART.s90</file>
+            <file>$PROJ_DIR$\Debug\List\ADC.s90</file>
+            <file>$PROJ_DIR$\ADC.c</file>
+            <file>$PROJ_DIR$\rc4.c</file>
+            <file>$PROJ_DIR$\Timers.c</file>
+            <file>$PROJ_DIR$\wrk_params.c</file>
+            <file>$PROJ_DIR$\Util.c</file>
+            <file>$PROJ_DIR$\main.c</file>
+            <file>$PROJ_DIR$\DS1Wire.c</file>
+            <file>$PROJ_DIR$\RF_transmitter.c</file>
+            <file>$PROJ_DIR$\Monitor.c</file>
+            <file>$PROJ_DIR$\USART.c</file>
+            <file>$PROJ_DIR$\Debug\List\DS1Wire.s90</file>
+            <file>$PROJ_DIR$\Debug\List\DS1Wire.lst</file>
+            <file>$TOOLKIT_DIR$\inc\ioavr.h</file>
+            <file>$TOOLKIT_DIR$\lib\clib\cl1s-ec_mul.r90</file>
+            <file>$PROJ_DIR$\lnkm8s.xcl</file>
+        </outputs>
+        <file>
+            <name>$PROJ_DIR$\Debug\Exe\Proj.a90</name>
+            <inputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 90 44 33 38 34 45 32 31 35 36 43 89</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\ADC.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 75 54 44</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 37</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 25</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 30 23 0 1 5 2 29 3 12 20 7 13 18</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\rc4.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 72 71 45</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 42</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 24</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 21</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Timers.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 58 59 31</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 55</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 26</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 2 12 7</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\wrk_params.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 57 56 43</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 51</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 67</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 30 23 0 1 5 14 2 18 9 7 19</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Util.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 61 62 36</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 53</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 28</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 2 14 23</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\main.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 4 22 38</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 40</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 17</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 30 23 0 1 5 14 2 19 29 11 7 3 20 12 9 13 18 21</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\DS1Wire.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 86 87 33</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 39</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 6</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 88 65 66 69 70 15 30 23 3</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\RF_transmitter.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 63 64 32</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 50</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 10</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 30 23 0 1 5 2 12 13 9 7 18 21</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\Monitor.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 46 47 34</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 41</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 8</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 30 23 0 1 5 14 48 2 29 11 7 19 3 20 12 9 13 18</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>$PROJ_DIR$\USART.c</name>
+            <outputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 74 73 35</file>
+                </tool>
+                <tool>
+                    <name>__cstat</name>
+                    <file> 52</file>
+                </tool>
+                <tool>
+                    <name>BICOMP</name>
+                    <file> 27</file>
+                </tool>
+            </outputs>
+            <inputs>
+                <tool>
+                    <name>ICCAVR</name>
+                    <file> 65 66 69 68 70 15 16 2 29</file>
+                </tool>
+            </inputs>
+        </file>
+        <file>
+            <name>[ROOT_NODE]</name>
+            <outputs>
+                <tool>
+                    <name>XLINK</name>
+                    <file> 49</file>
+                </tool>
+            </outputs>
+        </file>
+    </configuration>
+    <configuration>
+        <name>Release</name>
+        <outputs />
+        <forcedrebuild>
+            <name>[MULTI_TOOL]</name>
+            <tool>XLINK</tool>
+        </forcedrebuild>
+    </configuration>
+</project>
